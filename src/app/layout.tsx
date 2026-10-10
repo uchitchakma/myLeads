@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LeadFlow PRO - Autonomous Lead Discovery & Audit Engine",
-  description: "Automated local client acquisition and Google PageSpeed audit engine for web development agencies.",
+  title: "myLeads - Autonomous Lead Discovery & Outreach CRM",
+  description: "Autonomous Multi-Source Lead Generation, Technical SEO Auditing & Outreach CRM.",
 };
 
 export default function RootLayout({
