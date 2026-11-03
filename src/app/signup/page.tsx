@@ -32,11 +32,9 @@ export default function SignupPage() {
         throw new Error(data.error || "Signup failed");
       }
 
-      router.push("/dashboard");
-      router.refresh();
+      window.location.href = "/dashboard";
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
