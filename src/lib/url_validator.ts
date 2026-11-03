@@ -74,6 +74,12 @@ export function getVerifiedChannelUrl(
   const catClean = lead.category ? lead.category.trim() : "Business";
 
   switch (channel) {
+    case "HIGH_TICKET_CONTRACTORS":
+      if (lead.sourceUrl && (lead.sourceUrl.includes("houzz.com") || lead.sourceUrl.includes("thumbtack.com") || lead.sourceUrl.includes("bark.com"))) {
+        return lead.sourceUrl;
+      }
+      return `https://www.houzz.com/professionals/searchDirectory?query=${encodeURIComponent(bizClean || catClean)}&location=${encodeURIComponent(cityClean)}`;
+
     case "LINKEDIN_XRAY":
       return getVerifiedLinkedInUrl(lead.ownerName, lead.businessName, lead.city, lead.category, lead.sourceUrl);
 

@@ -10,6 +10,7 @@ import { harvestClutchLeads } from "@/lib/clutch_scraper";
 import { harvestBBBLeads } from "@/lib/bbb_scraper";
 import { harvestYelpLeads } from "@/lib/yelp_scraper";
 import { harvestAdSpendersLeads } from "@/lib/ad_spenders_scraper";
+import { harvestContractorLeads } from "@/lib/contractors_scraper";
 import { auditDomainDeliverability } from "@/lib/dns_deliverability";
 import { createOrUpdateLead, findUserById } from "@/lib/db";
 
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
 
     // Parse requested sources list
     const defaultSources = [
+      "HIGH_TICKET_CONTRACTORS",
       "AD_SPENDERS",
       "GOOGLE_MAPS",
       "LINKEDIN_XRAY",
@@ -77,6 +79,10 @@ export async function POST(req: NextRequest) {
         const promises: Promise<any>[] = [];
         const sourceTags: string[] = [];
 
+        if (requestedSources.includes("HIGH_TICKET_CONTRACTORS")) {
+          promises.push(harvestContractorLeads(singleNiche, singleCity, perCombinationCount));
+          sourceTags.push("HIGH_TICKET_CONTRACTORS");
+        }
         if (requestedSources.includes("AD_SPENDERS")) {
           promises.push(harvestAdSpendersLeads(singleNiche, singleCity, perCombinationCount));
           sourceTags.push("AD_SPENDERS");

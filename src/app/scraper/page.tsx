@@ -26,13 +26,15 @@ import {
   MessageCircle,
   Award,
   ShieldCheck,
-  Megaphone
+  Megaphone,
+  Hammer
 } from "lucide-react";
 import Link from "next/link";
 import { getVerifiedChannelUrl } from "@/lib/url_validator";
 
 export default function ScraperPage() {
   const [selectedSources, setSelectedSources] = useState<string[]>([
+    "HIGH_TICKET_CONTRACTORS",
     "AD_SPENDERS",
     "GOOGLE_MAPS",
     "LINKEDIN_XRAY",
@@ -65,6 +67,16 @@ export default function ScraperPage() {
   const cityInputRef = useRef<HTMLInputElement>(null);
 
   const availableSources = [
+    {
+      id: "HIGH_TICKET_CONTRACTORS",
+      name: "High-Ticket Contractors (Houzz & Thumbtack)",
+      tag: "$5k-$50k Projects",
+      description: "Roofers, remodelers, custom builders & architects with verified project hires",
+      icon: Hammer,
+      color: "text-amber-500",
+      bgColor: "bg-amber-500/10",
+      borderColor: "border-amber-500/20"
+    },
     {
       id: "AD_SPENDERS",
       name: "Paid Ad Spenders (Meta & Google)",
@@ -961,6 +973,12 @@ export default function ScraperPage() {
                 {/* Source Breakdown Indicators */}
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs">
                   <span className="text-[var(--text-muted)]">Extracted from:</span>
+                  {results.some(r => r.sourceTechnique === "HIGH_TICKET_CONTRACTORS" || r.discoverySources?.includes("HIGH_TICKET_CONTRACTORS")) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold font-mono text-[11px]">
+                      <Hammer className="w-3 h-3 text-amber-500" />
+                      <span>{results.filter(r => r.sourceTechnique === "HIGH_TICKET_CONTRACTORS" || r.discoverySources?.includes("HIGH_TICKET_CONTRACTORS")).length} Houzz &amp; Thumbtack</span>
+                    </span>
+                  )}
                   {results.some(r => r.sourceTechnique === "AD_SPENDERS" || r.discoverySources?.includes("AD_SPENDERS")) && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-semibold font-mono text-[11px]">
                       <Megaphone className="w-3 h-3 text-rose-500" />
@@ -1044,6 +1062,7 @@ export default function ScraperPage() {
                   </thead>
                   <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-muted)]">
                     {results.map((lead, idx) => {
+                      const isContractor = lead.sourceTechnique === "HIGH_TICKET_CONTRACTORS" || (lead.discoverySources && lead.discoverySources.includes("HIGH_TICKET_CONTRACTORS"));
                       const isAdSpender = lead.sourceTechnique === "AD_SPENDERS" || (lead.discoverySources && lead.discoverySources.includes("AD_SPENDERS"));
                       const isLinkedIn = lead.sourceTechnique === "LINKEDIN_XRAY" || (lead.discoverySources && lead.discoverySources.includes("LINKEDIN_XRAY"));
                       const isHiring = lead.sourceTechnique === "HIRING_SIGNALS" || (lead.discoverySources && lead.discoverySources.includes("HIRING_SIGNALS"));
@@ -1106,7 +1125,19 @@ export default function ScraperPage() {
 
                           {/* Source & Profile Link */}
                           <td className="px-4 py-4 whitespace-nowrap">
-                            {isAdSpender ? (
+                            {isContractor ? (
+                              <a
+                                href={getVerifiedChannelUrl("HIGH_TICKET_CONTRACTORS", lead)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-semibold hover:bg-amber-500/20 transition whitespace-nowrap shadow-xs"
+                                title="Open Verified Houzz / Thumbtack Contractor Listing"
+                              >
+                                <Hammer className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                <span>Houzz &amp; Thumbtack</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                              </a>
+                            ) : isAdSpender ? (
                               <a
                                 href={getVerifiedChannelUrl("AD_SPENDERS", lead)}
                                 target="_blank"
