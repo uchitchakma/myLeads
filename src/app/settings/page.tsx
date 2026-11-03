@@ -76,10 +76,15 @@ export default function SettingsPage() {
               senderEmail: data.user.email || ""
             }
           });
+        } else {
+          window.location.href = "/login";
+          return;
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        window.location.href = "/login";
+      });
   }, []);
 
   const handleTestGoogleKey = async () => {

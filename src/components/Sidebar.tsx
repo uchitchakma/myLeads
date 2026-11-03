@@ -46,11 +46,15 @@ export default function Sidebar() {
     fetch("/api/auth/me")
       .then(res => res.json())
       .then(data => {
-        if (data.authenticated) {
+        if (data.authenticated && data.user) {
           setUser(data.user);
+        } else {
+          window.location.href = "/login";
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        window.location.href = "/login";
+      });
   }, []);
 
   // Close mobile drawer on route changes
@@ -59,9 +63,11 @@ export default function Sidebar() {
   }, [pathname]);
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      window.location.href = "/login";
+    }
   };
 
   const navItems: NavItem[] = [
@@ -195,7 +201,7 @@ export default function Sidebar() {
               <div className="text-[10px] text-[var(--text-muted)] flex items-center gap-1">
                 {user?.role === "ADMIN" ? (
                   <span className="text-[#C5453E] font-medium flex items-center gap-0.5">
-                    <ShieldCheck className="w-3 h-3" /> Admin
+                    <ShieldCheck className="w-3 h-3" /> Super Admin
                   </span>
                 ) : (
                   <span className="text-[var(--text-muted)]">Scout User</span>

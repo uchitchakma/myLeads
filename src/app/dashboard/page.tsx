@@ -48,8 +48,11 @@ export default function DashboardPage() {
       fetch("/api/leads").then(r => r.json()),
       fetch("/api/campaigns").then(r => r.json())
     ]).then(([authData, leadsData, campData]) => {
-      if (authData.authenticated) {
+      if (authData.authenticated && authData.user) {
         setUser(authData.user);
+      } else {
+        window.location.href = "/login";
+        return;
       }
       if (leadsData.leads) {
         setLeads(leadsData.leads);
@@ -58,7 +61,9 @@ export default function DashboardPage() {
         setCampaignCount(campData.campaigns.length);
       }
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(() => {
+      window.location.href = "/login";
+    });
   }, []);
 
   const totalLeads = leads.length;

@@ -148,9 +148,14 @@ export default function LeadsPage() {
       const campData = await campRes.json();
       const userData = await userRes.json();
 
+      if (userData.authenticated && userData.user) {
+        setUser(userData.user);
+      } else {
+        window.location.href = "/login";
+        return;
+      }
       if (leadsData.leads) setLeads(leadsData.leads);
       if (campData.campaigns) setCampaigns(campData.campaigns);
-      if (userData.authenticated) setUser(userData.user);
       
       setLoading(false);
     } catch (err) {
