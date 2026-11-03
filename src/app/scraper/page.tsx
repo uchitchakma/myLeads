@@ -27,13 +27,15 @@ import {
   Award,
   ShieldCheck,
   Megaphone,
-  Hammer
+  Hammer,
+  ShoppingBag
 } from "lucide-react";
 import Link from "next/link";
 import { getVerifiedChannelUrl } from "@/lib/url_validator";
 
 export default function ScraperPage() {
   const [selectedSources, setSelectedSources] = useState<string[]>([
+    "SHOPIFY_ECOMMERCE",
     "HIGH_TICKET_CONTRACTORS",
     "AD_SPENDERS",
     "GOOGLE_MAPS",
@@ -67,6 +69,16 @@ export default function ScraperPage() {
   const cityInputRef = useRef<HTMLInputElement>(null);
 
   const availableSources = [
+    {
+      id: "SHOPIFY_ECOMMERCE",
+      name: "Shopify & E-Commerce Brands",
+      tag: "DTC Stores & SKUs",
+      description: "Direct-to-consumer online brands running on Shopify with live product catalogs",
+      icon: ShoppingBag,
+      color: "text-emerald-500",
+      bgColor: "bg-emerald-500/10",
+      borderColor: "border-emerald-500/20"
+    },
     {
       id: "HIGH_TICKET_CONTRACTORS",
       name: "High-Ticket Contractors (Houzz & Thumbtack)",
@@ -973,6 +985,12 @@ export default function ScraperPage() {
                 {/* Source Breakdown Indicators */}
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs">
                   <span className="text-[var(--text-muted)]">Extracted from:</span>
+                  {results.some(r => r.sourceTechnique === "SHOPIFY_ECOMMERCE" || r.discoverySources?.includes("SHOPIFY_ECOMMERCE")) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold font-mono text-[11px]">
+                      <ShoppingBag className="w-3 h-3 text-emerald-500" />
+                      <span>{results.filter(r => r.sourceTechnique === "SHOPIFY_ECOMMERCE" || r.discoverySources?.includes("SHOPIFY_ECOMMERCE")).length} Shopify DTC</span>
+                    </span>
+                  )}
                   {results.some(r => r.sourceTechnique === "HIGH_TICKET_CONTRACTORS" || r.discoverySources?.includes("HIGH_TICKET_CONTRACTORS")) && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold font-mono text-[11px]">
                       <Hammer className="w-3 h-3 text-amber-500" />
@@ -1062,6 +1080,7 @@ export default function ScraperPage() {
                   </thead>
                   <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-muted)]">
                     {results.map((lead, idx) => {
+                      const isShopify = lead.sourceTechnique === "SHOPIFY_ECOMMERCE" || (lead.discoverySources && lead.discoverySources.includes("SHOPIFY_ECOMMERCE"));
                       const isContractor = lead.sourceTechnique === "HIGH_TICKET_CONTRACTORS" || (lead.discoverySources && lead.discoverySources.includes("HIGH_TICKET_CONTRACTORS"));
                       const isAdSpender = lead.sourceTechnique === "AD_SPENDERS" || (lead.discoverySources && lead.discoverySources.includes("AD_SPENDERS"));
                       const isLinkedIn = lead.sourceTechnique === "LINKEDIN_XRAY" || (lead.discoverySources && lead.discoverySources.includes("LINKEDIN_XRAY"));
@@ -1125,7 +1144,19 @@ export default function ScraperPage() {
 
                           {/* Source & Profile Link */}
                           <td className="px-4 py-4 whitespace-nowrap">
-                            {isContractor ? (
+                            {isShopify ? (
+                              <a
+                                href={getVerifiedChannelUrl("SHOPIFY_ECOMMERCE", lead)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-500/20 transition whitespace-nowrap shadow-xs"
+                                title="Open Shopify Online Storefront"
+                              >
+                                <ShoppingBag className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                <span>Shopify Store</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                              </a>
+                            ) : isContractor ? (
                               <a
                                 href={getVerifiedChannelUrl("HIGH_TICKET_CONTRACTORS", lead)}
                                 target="_blank"

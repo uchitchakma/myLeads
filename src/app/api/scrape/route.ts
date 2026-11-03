@@ -11,6 +11,7 @@ import { harvestBBBLeads } from "@/lib/bbb_scraper";
 import { harvestYelpLeads } from "@/lib/yelp_scraper";
 import { harvestAdSpendersLeads } from "@/lib/ad_spenders_scraper";
 import { harvestContractorLeads } from "@/lib/contractors_scraper";
+import { harvestShopifyLeads } from "@/lib/shopify_scraper";
 import { auditDomainDeliverability } from "@/lib/dns_deliverability";
 import { createOrUpdateLead, findUserById } from "@/lib/db";
 
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
 
     // Parse requested sources list
     const defaultSources = [
+      "SHOPIFY_ECOMMERCE",
       "HIGH_TICKET_CONTRACTORS",
       "AD_SPENDERS",
       "GOOGLE_MAPS",
@@ -79,6 +81,10 @@ export async function POST(req: NextRequest) {
         const promises: Promise<any>[] = [];
         const sourceTags: string[] = [];
 
+        if (requestedSources.includes("SHOPIFY_ECOMMERCE")) {
+          promises.push(harvestShopifyLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
+          sourceTags.push("SHOPIFY_ECOMMERCE");
+        }
         if (requestedSources.includes("HIGH_TICKET_CONTRACTORS")) {
           promises.push(harvestContractorLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("HIGH_TICKET_CONTRACTORS");

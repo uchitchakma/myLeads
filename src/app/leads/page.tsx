@@ -41,7 +41,8 @@ import {
   MessageCircle,
   Award,
   Megaphone,
-  Hammer
+  Hammer,
+  ShoppingBag
 } from "lucide-react";
 import Link from "next/link";
 import { getVerifiedChannelUrl } from "@/lib/url_validator";
@@ -561,6 +562,7 @@ export default function LeadsPage() {
                 ) : (
                   filteredLeads.map(lead => {
                     const isSelected = selectedIds.includes(lead.id);
+                    const isShopify = lead.sourceTechnique === "SHOPIFY_ECOMMERCE" || (lead.discoverySources && lead.discoverySources.includes("SHOPIFY_ECOMMERCE"));
                     const isContractor = lead.sourceTechnique === "HIGH_TICKET_CONTRACTORS" || (lead.discoverySources && lead.discoverySources.includes("HIGH_TICKET_CONTRACTORS"));
                     const isAdSpender = lead.sourceTechnique === "AD_SPENDERS" || (lead.discoverySources && lead.discoverySources.includes("AD_SPENDERS"));
                     const isLinkedIn = lead.sourceTechnique === "LINKEDIN_XRAY" || (lead.discoverySources && lead.discoverySources.includes("LINKEDIN_XRAY"));
@@ -623,7 +625,19 @@ export default function LeadsPage() {
 
                         {/* Discovery Source & 1-Click Profile/Map Link (Unified, High-Value) */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
-                          {isContractor ? (
+                          {isShopify ? (
+                            <a
+                              href={getVerifiedChannelUrl("SHOPIFY_ECOMMERCE", lead)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-500/20 transition whitespace-nowrap shadow-xs"
+                              title="Open Shopify Online Storefront"
+                            >
+                              <ShoppingBag className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                              <span>Shopify Store</span>
+                              <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                            </a>
+                          ) : isContractor ? (
                             <a
                               href={getVerifiedChannelUrl("HIGH_TICKET_CONTRACTORS", lead)}
                               target="_blank"

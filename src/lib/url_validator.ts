@@ -65,6 +65,7 @@ export function getVerifiedChannelUrl(
     category?: string;
     city?: string;
     sourceUrl?: string;
+    websiteUrl?: string;
     googleMapsUrl?: string;
     phoneNumber?: string;
   }
@@ -74,6 +75,12 @@ export function getVerifiedChannelUrl(
   const catClean = lead.category ? lead.category.trim() : "Business";
 
   switch (channel) {
+    case "SHOPIFY_ECOMMERCE":
+      if (lead.sourceUrl && lead.sourceUrl.startsWith("http")) {
+        return lead.sourceUrl;
+      }
+      return lead.websiteUrl || `https://www.google.com/search?q=${encodeURIComponent(bizClean + " shopify store")}`;
+
     case "HIGH_TICKET_CONTRACTORS":
       if (lead.sourceUrl && (lead.sourceUrl.includes("houzz.com") || lead.sourceUrl.includes("thumbtack.com") || lead.sourceUrl.includes("bark.com"))) {
         return lead.sourceUrl;
