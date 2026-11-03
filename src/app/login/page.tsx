@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Flame, Lock, Mail, ArrowRight, ShieldCheck, UserCheck, Sun, Moon } from "lucide-react";
+import { Flame, Lock, Mail, ArrowRight, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
 export default function LoginPage() {
@@ -25,31 +25,6 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Login failed");
-      }
-
-      window.location.href = "/dashboard";
-    } catch (err: any) {
-      setError(err.message);
-      setLoading(false);
-    }
-  };
-
-  const handleQuickLogin = async (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: demoEmail, password: demoPass })
       });
 
       const data = await res.json();
@@ -140,40 +115,6 @@ export default function LoginPage() {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        {/* Quick Demo Logins for Fast Testing */}
-        <div className="mt-6 pt-6 border-t border-[var(--border-subtle)]">
-          <div className="text-[11px] font-semibold text-[var(--text-dim)] uppercase tracking-wider text-center mb-3">
-            Quick 1-Click Test Accounts
-          </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => handleQuickLogin("admin@leadflow.local", "admin123")}
-              className="p-2.5 rounded-xl bg-[var(--bg-card-hover)] hover:bg-[#C5453E]/10 border border-[var(--border-subtle)] hover:border-[#C5453E]/40 text-left transition group disabled:opacity-50"
-            >
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-main)] group-hover:text-[#C5453E]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#C5453E]" />
-                Super Admin
-              </div>
-              <div className="text-[10px] text-[var(--text-muted)] mt-0.5">1-Click Instant Login</div>
-            </button>
-
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => handleQuickLogin("alex@leadflow.local", "user123")}
-              className="p-2.5 rounded-xl bg-[var(--bg-card-hover)] hover:bg-amber-500/10 border border-[var(--border-subtle)] hover:border-amber-500/40 text-left transition group disabled:opacity-50"
-            >
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-main)] group-hover:text-amber-600">
-                <UserCheck className="w-3.5 h-3.5 text-amber-500" />
-                Scout User
-              </div>
-              <div className="text-[10px] text-[var(--text-muted)] mt-0.5">1-Click Instant Login</div>
-            </button>
-          </div>
-        </div>
 
         <div className="mt-6 text-center text-xs text-[var(--text-muted)]">
           Don&apos;t have an account?{" "}

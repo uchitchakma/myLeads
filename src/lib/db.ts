@@ -159,24 +159,16 @@ function readDb(): DatabaseSchema {
         {
           id: "usr_admin_master",
           name: "Super Admin",
-          email: "admin@leadflow.local",
-          passwordHash: bcrypt.hashSync("admin123", salt),
+          email: "uchitchakmas@gmail.com",
+          passwordHash: bcrypt.hashSync("Uchir@123", salt),
           role: "ADMIN",
-          isActive: true,
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "usr_lead_scout",
-          name: "Alex Dev",
-          email: "alex@leadflow.local",
-          passwordHash: bcrypt.hashSync("user123", salt),
-          role: "USER",
           isActive: true,
           createdAt: new Date().toISOString()
         }
       ],
       leads: [],
       scrapeJobs: [],
+      automations: [],
       campaigns: []
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(initialDb, null, 2));

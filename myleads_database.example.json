@@ -3,20 +3,11 @@
     {
       "id": "usr_admin_master",
       "name": "Super Admin",
-      "email": "admin@leadflow.local",
-      "passwordHash": "$2b$10$dnKbkLVs63B.UAeH3gbltO6o1K8k9v.B1mK8FhI/eLgB1/i5vK6Wq",
+      "email": "uchitchakmas@gmail.com",
+      "passwordHash": "$2b$10$Hgw60s9OYfSIejQ58nu6zetLhGBuH42bd7FYYBFCuRWLrWG0ZxTAq",
       "role": "ADMIN",
       "isActive": true,
-      "createdAt": "2026-10-10T00:00:00.000Z"
-    },
-    {
-      "id": "usr_lead_scout",
-      "name": "Alex Dev",
-      "email": "alex@leadflow.local",
-      "passwordHash": "$2b$10$dnKbkLVs63B.UAeH3gbltO6o1K8k9v.B1mK8FhI/eLgB1/i5vK6Wq",
-      "role": "USER",
-      "isActive": true,
-      "createdAt": "2026-10-10T00:00:00.000Z"
+      "createdAt": "2026-11-04T00:00:00.000Z"
     }
   ],
   "leads": [],
