@@ -25,13 +25,15 @@ import {
   BookOpen,
   MessageCircle,
   Award,
-  ShieldCheck
+  ShieldCheck,
+  Megaphone
 } from "lucide-react";
 import Link from "next/link";
 import { getVerifiedChannelUrl } from "@/lib/url_validator";
 
 export default function ScraperPage() {
   const [selectedSources, setSelectedSources] = useState<string[]>([
+    "AD_SPENDERS",
     "GOOGLE_MAPS",
     "LINKEDIN_XRAY",
     "HIRING_SIGNALS",
@@ -63,6 +65,16 @@ export default function ScraperPage() {
   const cityInputRef = useRef<HTMLInputElement>(null);
 
   const availableSources = [
+    {
+      id: "AD_SPENDERS",
+      name: "Paid Ad Spenders (Meta & Google)",
+      tag: "Active $1k+/mo Ads",
+      description: "Businesses actively running paid Facebook, Instagram & Google Ads",
+      icon: Megaphone,
+      color: "text-rose-500",
+      bgColor: "bg-rose-500/10",
+      borderColor: "border-rose-500/20"
+    },
     {
       id: "GOOGLE_MAPS",
       name: "Google Maps",
@@ -949,6 +961,12 @@ export default function ScraperPage() {
                 {/* Source Breakdown Indicators */}
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs">
                   <span className="text-[var(--text-muted)]">Extracted from:</span>
+                  {results.some(r => r.sourceTechnique === "AD_SPENDERS" || r.discoverySources?.includes("AD_SPENDERS")) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-semibold font-mono text-[11px]">
+                      <Megaphone className="w-3 h-3 text-rose-500" />
+                      <span>{results.filter(r => r.sourceTechnique === "AD_SPENDERS" || r.discoverySources?.includes("AD_SPENDERS")).length} Paid Ad Spenders</span>
+                    </span>
+                  )}
                   {results.some(r => r.sourceTechnique === "LINKEDIN_XRAY" || r.discoverySources?.includes("LINKEDIN_XRAY")) && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-semibold font-mono text-[11px]">
                       <Users className="w-3 h-3 text-sky-500" />
@@ -1026,6 +1044,7 @@ export default function ScraperPage() {
                   </thead>
                   <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-muted)]">
                     {results.map((lead, idx) => {
+                      const isAdSpender = lead.sourceTechnique === "AD_SPENDERS" || (lead.discoverySources && lead.discoverySources.includes("AD_SPENDERS"));
                       const isLinkedIn = lead.sourceTechnique === "LINKEDIN_XRAY" || (lead.discoverySources && lead.discoverySources.includes("LINKEDIN_XRAY"));
                       const isHiring = lead.sourceTechnique === "HIRING_SIGNALS" || (lead.discoverySources && lead.discoverySources.includes("HIRING_SIGNALS"));
                       const isYP = lead.sourceTechnique === "YELLOW_PAGES" || (lead.discoverySources && lead.discoverySources.includes("YELLOW_PAGES"));
@@ -1087,7 +1106,19 @@ export default function ScraperPage() {
 
                           {/* Source & Profile Link */}
                           <td className="px-4 py-4 whitespace-nowrap">
-                            {isLinkedIn ? (
+                            {isAdSpender ? (
+                              <a
+                                href={getVerifiedChannelUrl("AD_SPENDERS", lead)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-semibold hover:bg-rose-500/20 transition whitespace-nowrap shadow-xs"
+                                title="View Active Ads in Meta Ad Library & Google Ads"
+                              >
+                                <Megaphone className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                                <span>Meta &amp; Google Ads</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                              </a>
+                            ) : isLinkedIn ? (
                               <a
                                 href={getVerifiedChannelUrl("LINKEDIN_XRAY", lead)}
                                 target="_blank"

@@ -9,6 +9,7 @@ import { harvestMetaWhatsAppLeads } from "@/lib/meta_whatsapp_scraper";
 import { harvestClutchLeads } from "@/lib/clutch_scraper";
 import { harvestBBBLeads } from "@/lib/bbb_scraper";
 import { harvestYelpLeads } from "@/lib/yelp_scraper";
+import { harvestAdSpendersLeads } from "@/lib/ad_spenders_scraper";
 import { auditDomainDeliverability } from "@/lib/dns_deliverability";
 import { createOrUpdateLead, findUserById } from "@/lib/db";
 
@@ -45,6 +46,7 @@ export async function POST(req: NextRequest) {
 
     // Parse requested sources list
     const defaultSources = [
+      "AD_SPENDERS",
       "GOOGLE_MAPS",
       "LINKEDIN_XRAY",
       "HIRING_SIGNALS",
@@ -75,6 +77,10 @@ export async function POST(req: NextRequest) {
         const promises: Promise<any>[] = [];
         const sourceTags: string[] = [];
 
+        if (requestedSources.includes("AD_SPENDERS")) {
+          promises.push(harvestAdSpendersLeads(singleNiche, singleCity, perCombinationCount));
+          sourceTags.push("AD_SPENDERS");
+        }
         if (requestedSources.includes("GOOGLE_MAPS")) {
           promises.push(harvestGoogleMapsLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("GOOGLE_MAPS");

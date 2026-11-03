@@ -77,6 +77,12 @@ export function getVerifiedChannelUrl(
     case "LINKEDIN_XRAY":
       return getVerifiedLinkedInUrl(lead.ownerName, lead.businessName, lead.city, lead.category, lead.sourceUrl);
 
+    case "AD_SPENDERS":
+      if (lead.sourceUrl && (lead.sourceUrl.includes("facebook.com/ads/library") || lead.sourceUrl.includes("adstransparency.google.com"))) {
+        return lead.sourceUrl;
+      }
+      return `https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ALL&q=${encodeURIComponent(bizClean || catClean)}`;
+
     case "HIRING_SIGNALS":
       if (lead.sourceUrl && (lead.sourceUrl.startsWith("http://") || lead.sourceUrl.startsWith("https://")) && !lead.sourceUrl.includes("undefined")) {
         return lead.sourceUrl;

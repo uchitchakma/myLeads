@@ -39,7 +39,8 @@ import {
   ArrowUpRight,
   BookOpen,
   MessageCircle,
-  Award
+  Award,
+  Megaphone
 } from "lucide-react";
 import Link from "next/link";
 import { getVerifiedChannelUrl } from "@/lib/url_validator";
@@ -559,6 +560,7 @@ export default function LeadsPage() {
                 ) : (
                   filteredLeads.map(lead => {
                     const isSelected = selectedIds.includes(lead.id);
+                    const isAdSpender = lead.sourceTechnique === "AD_SPENDERS" || (lead.discoverySources && lead.discoverySources.includes("AD_SPENDERS"));
                     const isLinkedIn = lead.sourceTechnique === "LINKEDIN_XRAY" || (lead.discoverySources && lead.discoverySources.includes("LINKEDIN_XRAY"));
                     const isHiring = lead.sourceTechnique === "HIRING_SIGNALS" || (lead.discoverySources && lead.discoverySources.includes("HIRING_SIGNALS"));
                     const isYP = lead.sourceTechnique === "YELLOW_PAGES" || (lead.discoverySources && lead.discoverySources.includes("YELLOW_PAGES"));
@@ -619,7 +621,19 @@ export default function LeadsPage() {
 
                         {/* Discovery Source & 1-Click Profile/Map Link (Unified, High-Value) */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
-                          {isLinkedIn ? (
+                          {isAdSpender ? (
+                            <a
+                              href={getVerifiedChannelUrl("AD_SPENDERS", lead)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-semibold hover:bg-rose-500/20 transition whitespace-nowrap shadow-xs"
+                              title="View Active Ads in Meta Ad Library & Google Ads"
+                            >
+                              <Megaphone className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                              <span>Meta &amp; Google Ads</span>
+                              <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                            </a>
+                          ) : isLinkedIn ? (
                             <a
                               href={getVerifiedChannelUrl("LINKEDIN_XRAY", lead)}
                               target="_blank"
