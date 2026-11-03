@@ -13,6 +13,7 @@ import { harvestAdSpendersLeads } from "@/lib/ad_spenders_scraper";
 import { harvestContractorLeads } from "@/lib/contractors_scraper";
 import { harvestShopifyLeads } from "@/lib/shopify_scraper";
 import { harvestReputationLeads } from "@/lib/reputation_scraper";
+import { harvestNewBusinessLeads } from "@/lib/new_business_scraper";
 import { auditDomainDeliverability } from "@/lib/dns_deliverability";
 import { createOrUpdateLead, findUserById } from "@/lib/db";
 
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
 
     // Parse requested sources list
     const defaultSources = [
+      "NEW_BUSINESS_REGISTRATIONS",
       "LOW_RATING_REPUTATION",
       "SHOPIFY_ECOMMERCE",
       "HIGH_TICKET_CONTRACTORS",
@@ -83,6 +85,10 @@ export async function POST(req: NextRequest) {
         const promises: Promise<any>[] = [];
         const sourceTags: string[] = [];
 
+        if (requestedSources.includes("NEW_BUSINESS_REGISTRATIONS")) {
+          promises.push(harvestNewBusinessLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
+          sourceTags.push("NEW_BUSINESS_REGISTRATIONS");
+        }
         if (requestedSources.includes("LOW_RATING_REPUTATION")) {
           promises.push(harvestReputationLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("LOW_RATING_REPUTATION");

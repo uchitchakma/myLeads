@@ -563,6 +563,7 @@ export default function LeadsPage() {
                 ) : (
                   filteredLeads.map(lead => {
                     const isSelected = selectedIds.includes(lead.id);
+                    const isNewBusiness = lead.sourceTechnique === "NEW_BUSINESS_REGISTRATIONS" || (lead.discoverySources && lead.discoverySources.includes("NEW_BUSINESS_REGISTRATIONS"));
                     const isReputation = lead.sourceTechnique === "LOW_RATING_REPUTATION" || (lead.discoverySources && lead.discoverySources.includes("LOW_RATING_REPUTATION"));
                     const isShopify = lead.sourceTechnique === "SHOPIFY_ECOMMERCE" || (lead.discoverySources && lead.discoverySources.includes("SHOPIFY_ECOMMERCE"));
                     const isContractor = lead.sourceTechnique === "HIGH_TICKET_CONTRACTORS" || (lead.discoverySources && lead.discoverySources.includes("HIGH_TICKET_CONTRACTORS"));
@@ -627,7 +628,19 @@ export default function LeadsPage() {
 
                         {/* Discovery Source & 1-Click Profile/Map Link (Unified, High-Value) */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
-                          {isReputation ? (
+                          {isNewBusiness ? (
+                            <a
+                              href={getVerifiedChannelUrl("NEW_BUSINESS_REGISTRATIONS", lead)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-semibold hover:bg-amber-500/20 transition whitespace-nowrap shadow-xs"
+                              title="Open OpenCorporates / State Filing Record"
+                            >
+                              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              <span>New Filing</span>
+                              <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                            </a>
+                          ) : isReputation ? (
                             <a
                               href={getVerifiedChannelUrl("LOW_RATING_REPUTATION", lead)}
                               target="_blank"

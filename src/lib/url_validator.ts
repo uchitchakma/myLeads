@@ -75,6 +75,12 @@ export function getVerifiedChannelUrl(
   const catClean = lead.category ? lead.category.trim() : "Business";
 
   switch (channel) {
+    case "NEW_BUSINESS_REGISTRATIONS":
+      if (lead.sourceUrl && lead.sourceUrl.includes("opencorporates.com")) {
+        return lead.sourceUrl;
+      }
+      return `https://opencorporates.com/companies?q=${encodeURIComponent(bizClean + " " + cityClean)}`;
+
     case "LOW_RATING_REPUTATION":
       if (lead.sourceUrl && lead.sourceUrl.includes("trustpilot.com")) {
         return lead.sourceUrl;

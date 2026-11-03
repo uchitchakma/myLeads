@@ -36,6 +36,7 @@ import { getVerifiedChannelUrl } from "@/lib/url_validator";
 
 export default function ScraperPage() {
   const [selectedSources, setSelectedSources] = useState<string[]>([
+    "NEW_BUSINESS_REGISTRATIONS",
     "LOW_RATING_REPUTATION",
     "SHOPIFY_ECOMMERCE",
     "HIGH_TICKET_CONTRACTORS",
@@ -71,6 +72,16 @@ export default function ScraperPage() {
   const cityInputRef = useRef<HTMLInputElement>(null);
 
   const availableSources = [
+    {
+      id: "NEW_BUSINESS_REGISTRATIONS",
+      name: "New Business Registrations (State Filings)",
+      tag: "Fresh Registrations / High Intent",
+      description: "Brand new registered entities & freshly opened businesses needing websites, Google Maps & branding",
+      icon: Sparkles,
+      color: "text-amber-500",
+      bgColor: "bg-amber-500/10",
+      borderColor: "border-amber-500/20"
+    },
     {
       id: "LOW_RATING_REPUTATION",
       name: "Reputation & Low-Rating Targets (Trustpilot)",
@@ -997,6 +1008,12 @@ export default function ScraperPage() {
                 {/* Source Breakdown Indicators */}
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs">
                   <span className="text-[var(--text-muted)]">Extracted from:</span>
+                  {results.some(r => r.sourceTechnique === "NEW_BUSINESS_REGISTRATIONS" || r.discoverySources?.includes("NEW_BUSINESS_REGISTRATIONS")) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold font-mono text-[11px]">
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      <span>{results.filter(r => r.sourceTechnique === "NEW_BUSINESS_REGISTRATIONS" || r.discoverySources?.includes("NEW_BUSINESS_REGISTRATIONS")).length} New Filings</span>
+                    </span>
+                  )}
                   {results.some(r => r.sourceTechnique === "LOW_RATING_REPUTATION" || r.discoverySources?.includes("LOW_RATING_REPUTATION")) && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-600/10 text-rose-600 dark:text-rose-400 border border-rose-600/20 font-semibold font-mono text-[11px]">
                       <AlertTriangle className="w-3 h-3 text-rose-600" />
@@ -1098,6 +1115,7 @@ export default function ScraperPage() {
                   </thead>
                   <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-muted)]">
                     {results.map((lead, idx) => {
+                      const isNewBusiness = lead.sourceTechnique === "NEW_BUSINESS_REGISTRATIONS" || (lead.discoverySources && lead.discoverySources.includes("NEW_BUSINESS_REGISTRATIONS"));
                       const isReputation = lead.sourceTechnique === "LOW_RATING_REPUTATION" || (lead.discoverySources && lead.discoverySources.includes("LOW_RATING_REPUTATION"));
                       const isShopify = lead.sourceTechnique === "SHOPIFY_ECOMMERCE" || (lead.discoverySources && lead.discoverySources.includes("SHOPIFY_ECOMMERCE"));
                       const isContractor = lead.sourceTechnique === "HIGH_TICKET_CONTRACTORS" || (lead.discoverySources && lead.discoverySources.includes("HIGH_TICKET_CONTRACTORS"));
@@ -1163,7 +1181,19 @@ export default function ScraperPage() {
 
                           {/* Source & Profile Link */}
                           <td className="px-4 py-4 whitespace-nowrap">
-                            {isReputation ? (
+                            {isNewBusiness ? (
+                              <a
+                                href={getVerifiedChannelUrl("NEW_BUSINESS_REGISTRATIONS", lead)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-semibold hover:bg-amber-500/20 transition whitespace-nowrap shadow-xs"
+                                title="Open OpenCorporates / State Filing Record"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                <span>New Filing</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                              </a>
+                            ) : isReputation ? (
                               <a
                                 href={getVerifiedChannelUrl("LOW_RATING_REPUTATION", lead)}
                                 target="_blank"
