@@ -80,11 +80,11 @@ export async function POST(req: NextRequest) {
         const sourceTags: string[] = [];
 
         if (requestedSources.includes("HIGH_TICKET_CONTRACTORS")) {
-          promises.push(harvestContractorLeads(singleNiche, singleCity, perCombinationCount));
+          promises.push(harvestContractorLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("HIGH_TICKET_CONTRACTORS");
         }
         if (requestedSources.includes("AD_SPENDERS")) {
-          promises.push(harvestAdSpendersLeads(singleNiche, singleCity, perCombinationCount));
+          promises.push(harvestAdSpendersLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("AD_SPENDERS");
         }
         if (requestedSources.includes("GOOGLE_MAPS")) {
