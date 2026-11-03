@@ -75,6 +75,12 @@ export function getVerifiedChannelUrl(
   const catClean = lead.category ? lead.category.trim() : "Business";
 
   switch (channel) {
+    case "LOW_RATING_REPUTATION":
+      if (lead.sourceUrl && lead.sourceUrl.includes("trustpilot.com")) {
+        return lead.sourceUrl;
+      }
+      return `https://www.trustpilot.com/search?query=${encodeURIComponent(bizClean || catClean)}`;
+
     case "SHOPIFY_ECOMMERCE":
       if (lead.sourceUrl && lead.sourceUrl.startsWith("http")) {
         return lead.sourceUrl;

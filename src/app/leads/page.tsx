@@ -42,7 +42,8 @@ import {
   Award,
   Megaphone,
   Hammer,
-  ShoppingBag
+  ShoppingBag,
+  AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
 import { getVerifiedChannelUrl } from "@/lib/url_validator";
@@ -562,6 +563,7 @@ export default function LeadsPage() {
                 ) : (
                   filteredLeads.map(lead => {
                     const isSelected = selectedIds.includes(lead.id);
+                    const isReputation = lead.sourceTechnique === "LOW_RATING_REPUTATION" || (lead.discoverySources && lead.discoverySources.includes("LOW_RATING_REPUTATION"));
                     const isShopify = lead.sourceTechnique === "SHOPIFY_ECOMMERCE" || (lead.discoverySources && lead.discoverySources.includes("SHOPIFY_ECOMMERCE"));
                     const isContractor = lead.sourceTechnique === "HIGH_TICKET_CONTRACTORS" || (lead.discoverySources && lead.discoverySources.includes("HIGH_TICKET_CONTRACTORS"));
                     const isAdSpender = lead.sourceTechnique === "AD_SPENDERS" || (lead.discoverySources && lead.discoverySources.includes("AD_SPENDERS"));
@@ -625,7 +627,19 @@ export default function LeadsPage() {
 
                         {/* Discovery Source & 1-Click Profile/Map Link (Unified, High-Value) */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
-                          {isShopify ? (
+                          {isReputation ? (
+                            <a
+                              href={getVerifiedChannelUrl("LOW_RATING_REPUTATION", lead)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-600/10 text-rose-600 dark:text-rose-400 border border-rose-600/20 text-xs font-semibold hover:bg-rose-600/20 transition whitespace-nowrap shadow-xs"
+                              title="Open Trustpilot Reputation Profile"
+                            >
+                              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                              <span>Trustpilot Reviews</span>
+                              <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                            </a>
+                          ) : isShopify ? (
                             <a
                               href={getVerifiedChannelUrl("SHOPIFY_ECOMMERCE", lead)}
                               target="_blank"
