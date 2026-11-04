@@ -677,17 +677,29 @@ export default function LeadsPage() {
                               <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
                             </a>
                           ) : isAdSpender ? (
-                            <a
-                              href={getVerifiedChannelUrl("AD_SPENDERS", lead)}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-semibold hover:bg-rose-500/20 transition whitespace-nowrap shadow-xs"
-                              title="View Active Ads in Meta Ad Library & Google Ads"
-                            >
-                              <Megaphone className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                              <span>Meta &amp; Google Ads</span>
-                              <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
-                            </a>
+                            <div className="inline-flex items-center gap-1.5 flex-nowrap">
+                              <a
+                                href={`https://adstransparency.google.com/search?q=${encodeURIComponent(lead.businessName || "")}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-xs font-semibold hover:bg-blue-500/20 transition whitespace-nowrap shadow-xs"
+                                title="Check Active Search & Display Campaigns in Google Ads Transparency Center"
+                              >
+                                <Megaphone className="w-3 h-3 text-blue-500 shrink-0" />
+                                <span>Google Ads</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                              </a>
+                              <a
+                                href={`https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&q=${encodeURIComponent(lead.businessName || "")}&search_type=keyword_unordered&media_type=all`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-semibold hover:bg-rose-500/20 transition whitespace-nowrap shadow-xs"
+                                title="Check Meta / Instagram Campaigns in Meta Ad Library"
+                              >
+                                <span>Meta Ads</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                              </a>
+                            </div>
                           ) : isLinkedIn ? (
                             <a
                               href={getVerifiedChannelUrl("LINKEDIN_XRAY", lead)}

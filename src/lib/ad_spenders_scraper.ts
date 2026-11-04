@@ -286,11 +286,17 @@ async function auditAndEnrichAdLeads(
       `Are you losing paid ad clicks on ${biz.name}'s mobile landing page?`
     ];
 
-    const body = `Hi Marketing Principal / Owner,\n\nI was analyzing active paid advertising campaigns for ${niche} providers in ${city} and saw ${biz.name}'s live ads (${activeCreatives}, estimated spend tier ${adSpendTier}).\n\nI ran a mobile performance audit on the landing page your paid traffic is landing on (${biz.website}).\n\nCurrently, the page takes ~${loadTime} to render for mobile visitors (PageSpeed score: ${speedScore}/100). According to Google & Meta performance benchmarks, every 1-second delay past 2 seconds reduces ad conversion rates by up to 20%—meaning roughly 30-40% of your paid ad budget is being lost to bouncing clicks before leads even see your offer.\n\nWe build ultra-fast (95+ PageSpeed), high-converting landing pages specifically designed for paid traffic campaigns that double lead capture rates.\n\nWould you be open to a quick 2-minute video walkthrough showing the bottlenecks on your ad landing page and how to fix them?\n\nBest regards,\nAlex | Paid Media & CRO Specialist`;
+    const body = `Hi Marketing Principal / Owner,\n\nI was analyzing active paid advertising campaigns for ${niche} providers in ${city} and saw ${biz.name}'s live ads (${activeCreatives}, estimated spend tier ${adSpendTier}).\n\nI ran a mobile performance audit on the landing page your paid traffic is landing on (${biz.website}).\n\nCurrently, the page takes ~${loadTime} to render for mobile visitors (PageSpeed score: ${speedScore}/100). According to Google & Meta performance benchmarks, every 1-second delay past 2 seconds reduces ad conversion rates by up to 20%—meaning roughly 30-40% of your paid ad budget is being lost to bouncing clicks before leads even see your offer.\n\nWe build ultra-fast (95+ PageSpeed), high-converting landing pages specifically designed for paid traffic campaigns that double lead capture rates.\n\nWould you be open to a quick 2-minute video walkthrough showing the bottlenecks on your ad landing page and how to fix them?\n\nBest regards,\nUchit Chakma | UCDREAMS (https://ucdreams.com)`;
 
     const whatsapp = `Hi ${biz.name} team! 👋 Saw your active ads running in ${city}. Ran a quick speed test on your ad landing page (${biz.website})—it's loading in ~${loadTime} on mobile, which burns a big chunk of paid ad clicks. Want a free 2-minute video showing 2 tweaks to double your ad conversions?`;
 
-    const adLibraryUrl = `https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ALL&q=${encodeURIComponent(biz.name)}`;
+    const cleanBizName = biz.name.replace(/LLC|Inc\.|Corp\.|Ltd\./gi, "").trim();
+    let adLibraryUrl = "";
+    if (pixelType === "Google Search & Display Ads") {
+      adLibraryUrl = `https://adstransparency.google.com/search?q=${encodeURIComponent(cleanBizName)}`;
+    } else {
+      adLibraryUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&q=${encodeURIComponent(cleanBizName)}&search_type=keyword_unordered&media_type=all`;
+    }
 
     leads.push({
       businessName: biz.name,

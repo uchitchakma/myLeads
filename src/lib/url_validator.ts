@@ -106,7 +106,7 @@ export function getVerifiedChannelUrl(
       if (lead.sourceUrl && (lead.sourceUrl.includes("facebook.com/ads/library") || lead.sourceUrl.includes("adstransparency.google.com"))) {
         return lead.sourceUrl;
       }
-      return `https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ALL&q=${encodeURIComponent(bizClean || catClean)}`;
+      return `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&q=${encodeURIComponent(bizClean || catClean)}&search_type=keyword_unordered&media_type=all`;
 
     case "HIRING_SIGNALS":
       if (lead.sourceUrl && (lead.sourceUrl.startsWith("http://") || lead.sourceUrl.startsWith("https://")) && !lead.sourceUrl.includes("undefined")) {
