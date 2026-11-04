@@ -10,16 +10,21 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { leadIds, customSubject, customBody, useAiPitch = true } = await req.json();
+    const { leadIds, customSubject, customBody, useAiPitch = true, outreachBatch } = await req.json();
 
-    if (!leadIds || !Array.isArray(leadIds) || leadIds.length === 0) {
+    // Support either leadIds array or explicit outreachBatch [{ leadId, subject, body }]
+    const effectiveLeadIds = outreachBatch && Array.isArray(outreachBatch)
+      ? outreachBatch.map((item: any) => item.leadId)
+      : leadIds;
+
+    if (!effectiveLeadIds || !Array.isArray(effectiveLeadIds) || effectiveLeadIds.length === 0) {
       return NextResponse.json({ error: "Please select at least one lead to email." }, { status: 400 });
     }
 
     const user = findUserById(session.userId);
     const isAdmin = session.role === "ADMIN";
     const allLeads = getLeads(session.userId, isAdmin);
-    const targetLeads = allLeads.filter(l => leadIds.includes(l.id));
+    const targetLeads = allLeads.filter(l => effectiveLeadIds.includes(l.id));
 
     if (targetLeads.length === 0) {
       return NextResponse.json({ error: "No matching leads found." }, { status: 400 });
@@ -53,11 +58,17 @@ export async function POST(req: NextRequest) {
     for (const lead of targetLeads) {
       const recipient = lead.contactEmail || `contact@${lead.normalizedDomain || "client.com"}`;
       
-      // Determine Subject & Body
-      let subject = customSubject || lead.aiPitch?.subjects?.[0] || `Quick question regarding ${lead.businessName}'s website`;
-      let body = useAiPitch && lead.aiPitch?.body 
-        ? lead.aiPitch.body 
-        : (customBody || "Hello {{ownerName}},\n\nI was looking at {{businessName}} and wanted to share a quick mobile performance audit...\n\nBest regards,\nUchit Chakma\nFounder & Technical Director | UCDREAMS\nhttps://ucdreams.com");
+      // Determine Subject & Body (Priority: explicit item in outreachBatch > customSubject/customBody > lead.aiPitch > fallback)
+      const batchItem = outreachBatch && Array.isArray(outreachBatch)
+        ? outreachBatch.find((b: any) => b.leadId === lead.id)
+        : null;
+
+      let subject = batchItem?.subject || customSubject || lead.aiPitch?.subjects?.[0] || `Quick question regarding ${lead.businessName}'s website`;
+      let body = batchItem?.body 
+        ? batchItem.body 
+        : (useAiPitch && lead.aiPitch?.body 
+            ? lead.aiPitch.body 
+            : (customBody || "Hello {{ownerName}},\n\nI was looking at {{businessName}} and wanted to share a quick mobile performance audit...\n\nBest regards,\nUchit Chakma\nFounder & Technical Director | UCDREAMS\nhttps://ucdreams.com"));
 
       // Replace template merge variables
       const mergeVars: Record<string, string> = {
@@ -85,7 +96,7 @@ export async function POST(req: NextRequest) {
             text: body
           });
 
-          recordEmailSent(lead.id, subject, "SENT");
+          recordEmailSent(lead.id, subject, "SENT", body, recipient);
           dispatchLogs.push({
             leadId: lead.id,
             businessName: lead.businessName,
@@ -105,7 +116,7 @@ export async function POST(req: NextRequest) {
         }
       } else {
         // Simulated Dispatch (Updates local CRM pipeline & records activity)
-        recordEmailSent(lead.id, subject, "SIMULATED_SENT");
+        recordEmailSent(lead.id, subject, "SIMULATED_SENT", body, recipient);
         dispatchLogs.push({
           leadId: lead.id,
           businessName: lead.businessName,

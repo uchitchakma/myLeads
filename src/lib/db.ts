@@ -70,6 +70,8 @@ export interface Lead {
     sentAt: string;
     subject: string;
     status: string;
+    body?: string;
+    recipientEmail?: string;
   }>;
   createdAt: string;
   updatedAt: string;
@@ -752,17 +754,21 @@ export function removeCampaign(campaignName: string, requesterId: string, isAdmi
   return 1;
 }
 
-export function recordEmailSent(leadId: string, subject: string, status: string = "SENT"): void {
+export function recordEmailSent(leadId: string, subject: string, status: string = "SENT", body?: string, recipientEmail?: string): void {
   const db = readDb();
   const index = db.leads.findIndex(l => l.id === leadId);
   if (index !== -1) {
     if (!db.leads[index].emailHistory) {
       db.leads[index].emailHistory = [];
     }
+    const finalBody = body || db.leads[index].aiPitch?.body || "";
+    const finalRecipient = recipientEmail || db.leads[index].contactEmail || "";
     db.leads[index].emailHistory!.push({
       sentAt: new Date().toISOString(),
       subject,
-      status
+      status,
+      body: finalBody,
+      recipientEmail: finalRecipient
     });
     db.leads[index].status = "CONTACTED";
     db.leads[index].updatedAt = new Date().toISOString();

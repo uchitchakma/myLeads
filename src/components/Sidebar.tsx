@@ -17,7 +17,8 @@ import {
   Bot,
   Menu,
   X,
-  Send
+  Send,
+  MailCheck
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -91,6 +92,12 @@ export default function Sidebar() {
       label: "Campaigns & Outreach",
       href: "/campaigns",
       icon: Send
+    },
+    {
+      label: "Sent Emails",
+      href: "/sent",
+      icon: MailCheck,
+      badge: "Outbox"
     },
     {
       label: "Autopilot Automations",
