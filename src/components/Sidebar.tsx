@@ -8,6 +8,7 @@ import {
   Database, 
   Users, 
   Layers, 
+  Key, 
   Settings,
   LogOut, 
   ShieldCheck, 
@@ -115,6 +116,12 @@ export default function Sidebar() {
       href: "/admin/users",
       icon: Users,
       badge: "Admin"
+    },
+    {
+      label: "Global API & System",
+      href: "/admin/settings",
+      icon: Key,
+      badge: "Master"
     }
   ];
 

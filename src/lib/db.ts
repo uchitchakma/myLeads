@@ -130,6 +130,120 @@ interface DatabaseSchema {
   scrapeJobs: ScrapeJob[];
   automations?: AutomationTask[];
   campaigns?: Campaign[];
+  systemSettings?: SystemSettings;
+}
+
+export interface SystemSettings {
+  googleAuth: {
+    enabled: boolean;
+    clientId: string;
+    clientSecret: string;
+    redirectUri: string;
+  };
+  systemSmtp: {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+    senderName: string;
+    senderEmail: string;
+    notificationEmail: string;
+  };
+  contactFormConfig: {
+    enabled: boolean;
+    forwardToEmail: boolean;
+    saveAsLead: boolean;
+    notifyAdmin: boolean;
+  };
+  globalApis: {
+    googleMapsApiKey?: string;
+    yelpApiKey?: string;
+    geminiApiKey?: string;
+    webhookUrl?: string;
+  };
+  security: {
+    allowPublicRegistration: boolean;
+  };
+  updatedAt: string;
+}
+
+export function getDefaultSystemSettings(): SystemSettings {
+  return {
+    googleAuth: {
+      enabled: false,
+      clientId: "",
+      clientSecret: "",
+      redirectUri: "https://myleads.ucdreams.com/api/auth/google/callback"
+    },
+    systemSmtp: {
+      host: "smtp.hostinger.com",
+      port: 465,
+      secure: true,
+      user: "uchit@ucdreams.website",
+      pass: "Uchir@123",
+      senderName: "myLeads System",
+      senderEmail: "uchit@ucdreams.website",
+      notificationEmail: "uchitchakmas@gmail.com"
+    },
+    contactFormConfig: {
+      enabled: true,
+      forwardToEmail: true,
+      saveAsLead: true,
+      notifyAdmin: true
+    },
+    globalApis: {
+      googleMapsApiKey: "",
+      yelpApiKey: "",
+      geminiApiKey: "",
+      webhookUrl: ""
+    },
+    security: {
+      allowPublicRegistration: true
+    },
+    updatedAt: new Date().toISOString()
+  };
+}
+
+export function getSystemSettings(): SystemSettings {
+  const db = readDb();
+  if (!db.systemSettings) {
+    db.systemSettings = getDefaultSystemSettings();
+    writeDb(db);
+  }
+  return db.systemSettings;
+}
+
+export function updateSystemSettings(updates: Partial<SystemSettings>): SystemSettings {
+  const db = readDb();
+  const current = db.systemSettings || getDefaultSystemSettings();
+  db.systemSettings = {
+    ...current,
+    ...updates,
+    googleAuth: {
+      ...current.googleAuth,
+      ...(updates.googleAuth || {})
+    },
+    systemSmtp: {
+      ...current.systemSmtp,
+      ...(updates.systemSmtp || {})
+    },
+    contactFormConfig: {
+      ...current.contactFormConfig,
+      ...(updates.contactFormConfig || {})
+    },
+    globalApis: {
+      ...current.globalApis,
+      ...(updates.globalApis || {})
+    },
+    security: {
+      ...current.security,
+      ...(updates.security || {})
+    },
+    updatedAt: new Date().toISOString()
+  };
+  writeDb(db);
+  return db.systemSettings;
 }
 
 const DB_FILE = fs.existsSync(path.join(process.cwd(), "myleads_database.json"))
