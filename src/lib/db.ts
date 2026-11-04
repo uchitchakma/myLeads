@@ -55,6 +55,8 @@ export interface Lead {
   address?: string;
   companyNumber?: string;
   incorporationDate?: string;
+  capitalRaised?: string;
+  cik?: string;
   speedScore: number;
   mobileFriendly: boolean;
   loadTime: string;

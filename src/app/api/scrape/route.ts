@@ -15,6 +15,7 @@ import { harvestShopifyLeads } from "@/lib/shopify_scraper";
 import { harvestReputationLeads } from "@/lib/reputation_scraper";
 import { harvestNewBusinessLeads } from "@/lib/new_business_scraper";
 import { harvestUkCompaniesLeads } from "@/lib/uk_companies_scraper";
+import { harvestSecEdgarLeads } from "@/lib/sec_edgar_scraper";
 import { auditDomainDeliverability } from "@/lib/dns_deliverability";
 import { createOrUpdateLead, findUserById, getSystemSettings } from "@/lib/db";
 
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
 
     // Parse requested sources list
     const defaultSources = [
+      "SEC_EDGAR_FUNDED",
       "UK_COMPANIES_HOUSE",
       "NEW_BUSINESS_REGISTRATIONS",
       "LOW_RATING_REPUTATION",
@@ -87,6 +89,10 @@ export async function POST(req: NextRequest) {
         const promises: Promise<any>[] = [];
         const sourceTags: string[] = [];
 
+        if (requestedSources.includes("SEC_EDGAR_FUNDED")) {
+          promises.push(harvestSecEdgarLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
+          sourceTags.push("SEC_EDGAR_FUNDED");
+        }
         if (requestedSources.includes("UK_COMPANIES_HOUSE")) {
           const sysSettings = getSystemSettings();
           const chKey = user?.companiesHouseApiKey || sysSettings.globalApis?.companiesHouseApiKey;
@@ -206,6 +212,8 @@ export async function POST(req: NextRequest) {
         reviewCount: (item as any).reviewCount,
         companyNumber: (item as any).companyNumber,
         incorporationDate: (item as any).incorporationDate,
+        capitalRaised: (item as any).capitalRaised,
+        cik: (item as any).cik,
         speedScore: item.speedScore,
         mobileFriendly: item.mobileFriendly,
         loadTime: item.loadTime,

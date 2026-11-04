@@ -145,6 +145,12 @@ export function getVerifiedChannelUrl(
       }
       return `https://find-and-update.company-information.service.gov.uk/search/companies?q=${encodeURIComponent(bizClean + " " + cityClean)}`;
 
+    case "SEC_EDGAR_FUNDED":
+      if (lead.sourceUrl && lead.sourceUrl.includes("sec.gov")) {
+        return lead.sourceUrl;
+      }
+      return `https://www.sec.gov/edgar/searchedgar/companysearch?companyName=${encodeURIComponent(bizClean)}`;
+
     case "GOOGLE_MAPS":
     default:
       if (lead.googleMapsUrl && lead.googleMapsUrl.includes("google.com/maps")) {

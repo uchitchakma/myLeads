@@ -30,13 +30,15 @@ import {
   Hammer,
   ShoppingBag,
   AlertTriangle,
-  Landmark
+  Landmark,
+  TrendingUp
 } from "lucide-react";
 import Link from "next/link";
 import { getVerifiedChannelUrl } from "@/lib/url_validator";
 
 export default function ScraperPage() {
   const [selectedSources, setSelectedSources] = useState<string[]>([
+    "SEC_EDGAR_FUNDED",
     "UK_COMPANIES_HOUSE",
     "NEW_BUSINESS_REGISTRATIONS",
     "LOW_RATING_REPUTATION",
@@ -74,6 +76,16 @@ export default function ScraperPage() {
   const cityInputRef = useRef<HTMLInputElement>(null);
 
   const availableSources = [
+    {
+      id: "SEC_EDGAR_FUNDED",
+      name: "SEC EDGAR (US Form D Venture Capital)",
+      tag: "$100k-$15M+ Fresh Capital",
+      description: "US companies with confirmed SEC Form D venture funding, named executive officers & capital raised",
+      icon: TrendingUp,
+      color: "text-emerald-500",
+      bgColor: "bg-emerald-500/10",
+      borderColor: "border-emerald-500/20"
+    },
     {
       id: "UK_COMPANIES_HOUSE",
       name: "UK Companies House (Official Gov.uk)",
@@ -1020,6 +1032,12 @@ export default function ScraperPage() {
                 {/* Source Breakdown Indicators */}
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs">
                   <span className="text-[var(--text-muted)]">Extracted from:</span>
+                  {results.some(r => r.sourceTechnique === "SEC_EDGAR_FUNDED" || r.discoverySources?.includes("SEC_EDGAR_FUNDED")) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold font-mono text-[11px]">
+                      <TrendingUp className="w-3 h-3 text-emerald-500" />
+                      <span>{results.filter(r => r.sourceTechnique === "SEC_EDGAR_FUNDED" || r.discoverySources?.includes("SEC_EDGAR_FUNDED")).length} SEC Funded</span>
+                    </span>
+                  )}
                   {results.some(r => r.sourceTechnique === "UK_COMPANIES_HOUSE" || r.discoverySources?.includes("UK_COMPANIES_HOUSE")) && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-semibold font-mono text-[11px]">
                       <Landmark className="w-3 h-3 text-purple-500" />
@@ -1133,6 +1151,7 @@ export default function ScraperPage() {
                   </thead>
                   <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-muted)]">
                     {results.map((lead, idx) => {
+                      const isSecEdgar = lead.sourceTechnique === "SEC_EDGAR_FUNDED" || (lead.discoverySources && lead.discoverySources.includes("SEC_EDGAR_FUNDED"));
                       const isUkCompanies = lead.sourceTechnique === "UK_COMPANIES_HOUSE" || (lead.discoverySources && lead.discoverySources.includes("UK_COMPANIES_HOUSE"));
                       const isNewBusiness = lead.sourceTechnique === "NEW_BUSINESS_REGISTRATIONS" || (lead.discoverySources && lead.discoverySources.includes("NEW_BUSINESS_REGISTRATIONS"));
                       const isReputation = lead.sourceTechnique === "LOW_RATING_REPUTATION" || (lead.discoverySources && lead.discoverySources.includes("LOW_RATING_REPUTATION"));
@@ -1200,7 +1219,19 @@ export default function ScraperPage() {
 
                           {/* Source & Profile Link */}
                           <td className="px-4 py-4 whitespace-nowrap">
-                            {isUkCompanies ? (
+                            {isSecEdgar ? (
+                              <a
+                                href={getVerifiedChannelUrl("SEC_EDGAR_FUNDED", lead)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-500/20 transition whitespace-nowrap shadow-xs"
+                                title="Open Official SEC EDGAR Form D Venture Filing"
+                              >
+                                <TrendingUp className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                <span>{lead.capitalRaised ? `SEC: ${lead.capitalRaised}` : "SEC Form D"}</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                              </a>
+                            ) : isUkCompanies ? (
                               <a
                                 href={getVerifiedChannelUrl("UK_COMPANIES_HOUSE", lead)}
                                 target="_blank"

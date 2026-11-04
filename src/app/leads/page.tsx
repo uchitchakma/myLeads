@@ -45,6 +45,7 @@ import {
   ShoppingBag,
   AlertTriangle,
   Landmark,
+  TrendingUp,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -635,6 +636,7 @@ export default function LeadsPage() {
                 ) : (
                   paginatedLeads.map(lead => {
                     const isSelected = selectedIds.includes(lead.id);
+                    const isSecEdgar = lead.sourceTechnique === "SEC_EDGAR_FUNDED" || (lead.discoverySources && lead.discoverySources.includes("SEC_EDGAR_FUNDED"));
                     const isUkCompanies = lead.sourceTechnique === "UK_COMPANIES_HOUSE" || (lead.discoverySources && lead.discoverySources.includes("UK_COMPANIES_HOUSE"));
                     const isNewBusiness = lead.sourceTechnique === "NEW_BUSINESS_REGISTRATIONS" || (lead.discoverySources && lead.discoverySources.includes("NEW_BUSINESS_REGISTRATIONS"));
                     const isReputation = lead.sourceTechnique === "LOW_RATING_REPUTATION" || (lead.discoverySources && lead.discoverySources.includes("LOW_RATING_REPUTATION"));
@@ -701,7 +703,19 @@ export default function LeadsPage() {
 
                         {/* Discovery Source & 1-Click Profile/Map Link (Unified, High-Value) */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
-                          {isUkCompanies ? (
+                          {isSecEdgar ? (
+                            <a
+                              href={getVerifiedChannelUrl("SEC_EDGAR_FUNDED", lead)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-500/20 transition whitespace-nowrap shadow-xs"
+                              title="Open Official SEC EDGAR Form D Venture Filing"
+                            >
+                              <TrendingUp className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                              <span>{lead.capitalRaised ? `SEC: ${lead.capitalRaised}` : "SEC Form D"}</span>
+                              <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                            </a>
+                          ) : isUkCompanies ? (
                             <a
                               href={getVerifiedChannelUrl("UK_COMPANIES_HOUSE", lead)}
                               target="_blank"
