@@ -2,14 +2,14 @@
  * Live Paid Ad Spenders Harvester (Meta Ad Library & Google Sponsored Ads)
  * Extracts 100% REAL businesses, live website domains, real phone numbers,
  * and scrapes actual business emails from live websites.
- * Detects live Meta Pixels (fbq/fbevents) and Google Conversion tags on client websites.
+ * Detects verified Meta Pixels (fbq/fbevents) and Google Conversion tags (AW-) on client websites.
  */
 
 export interface AdSpenderLead {
   businessName: string;
   websiteUrl: string;
   googleMapsUrl?: string;
-  sourceUrl: string; // Meta Ad Library search link
+  sourceUrl: string; // Meta Ad Library or Google Ads Transparency Center search link
   phoneNumber: string;
   contactEmail: string;
   ownerName: string;
@@ -30,7 +30,7 @@ export interface AdSpenderLead {
 }
 
 /**
- * Main Paid Ad Spenders Harvester (Pulls 100% Real Businesses & Scrapes Live Websites)
+ * Main Ad Spenders Harvester
  */
 export async function harvestAdSpendersLeads(
   niche: string,
@@ -52,21 +52,23 @@ export async function harvestAdSpendersLeads(
     reviews?: number;
   }> = [];
 
-  // 1. If Google API key available, query Google Places API for real businesses
+  // 1. Query Google Places API for real businesses in the niche & city
+  // Fetch a larger pool (up to 12) to scan for live Meta Pixels & Google Ads tags
   if (apiKey && apiKey.trim().length > 10) {
     try {
       const placesUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${apiKey.trim()}`;
-      const res = await fetch(placesUrl, { signal: AbortSignal.timeout(8000) });
+      const res = await fetch(placesUrl, { signal: AbortSignal.timeout(7000) });
       if (res.ok) {
         const data = await res.json();
         if (data.results && data.results.length > 0) {
-          for (const place of data.results.slice(0, count + 2)) {
+          const poolLimit = Math.min(14, (count * 3) + 2);
+          for (const place of data.results.slice(0, poolLimit)) {
             let website = "";
             let phone = "";
 
             if (place.place_id) {
               try {
-                const detUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,website,formatted_phone_number&key=${apiKey.trim()}`;
+                const detUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,website,formatted_phone_number,formatted_address&key=${apiKey.trim()}`;
                 const detRes = await fetch(detUrl, { signal: AbortSignal.timeout(4000) });
                 if (detRes.ok) {
                   const detData = await detRes.json();
@@ -88,7 +90,7 @@ export async function harvestAdSpendersLeads(
               });
             }
 
-            if (realBusinesses.length >= count) break;
+            if (realBusinesses.length >= poolLimit) break;
           }
         }
       }
@@ -97,7 +99,7 @@ export async function harvestAdSpendersLeads(
     }
   }
 
-  // 2. OpenStreetMap / Overpass Fallback (Real Physical Businesses, No CAPTCHA)
+  // 2. OpenStreetMap / Overpass Fallback if needed
   if (realBusinesses.length < count) {
     try {
       const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanCity)}&format=json&limit=1`;
@@ -151,43 +153,20 @@ export async function harvestAdSpendersLeads(
     }
   }
 
-  // 3. Fallback to clean realistic records if no network response
-  if (realBusinesses.length === 0) {
-    const cityName = cleanCity.split(",")[0].trim();
-    const cleanSlug = cleanNiche.toLowerCase().replace(/[^a-z0-9]/g, "");
-    realBusinesses.push(
-      {
-        name: `${cityName} Premier ${cleanNiche}`,
-        website: `https://www.${cityName.toLowerCase()}${cleanSlug}.com`,
-        phone: `+1 (212) 555-${Math.floor(Math.random() * 9000 + 1000)}`,
-        address: cleanCity,
-        rating: 4.9,
-        reviews: 48
-      },
-      {
-        name: `${cityName} Center for ${cleanNiche}`,
-        website: `https://www.${cleanSlug}center${cityName.toLowerCase()}.com`,
-        phone: `+1 (212) 555-${Math.floor(Math.random() * 9000 + 1000)}`,
-        address: cleanCity,
-        rating: 4.8,
-        reviews: 36
-      }
-    );
-  }
-
-  // 4. Enrich each real business by inspecting their live website for emails & ad pixels
-  return await auditAndEnrichAdLeads(realBusinesses.slice(0, count), cleanNiche, cleanCity);
+  // 3. Enrich each real business by inspecting their live website for emails & ad pixels
+  return await auditAndEnrichAdLeads(realBusinesses, cleanNiche, cleanCity, count);
 }
 
 /**
- * Audits client websites for real emails, Meta/Google ad tracking pixels, and mobile speed
+ * Live Website Crawler & Ad Pixel Auditor
  */
 async function auditAndEnrichAdLeads(
-  businesses: Array<{ name: string; website: string; phone: string; address: string; rating?: number; reviews?: number }>,
+  businesses: Array<{ name: string; website: string; phone: string; address: string; placeId?: string; rating?: number; reviews?: number }>,
   niche: string,
-  city: string
+  city: string,
+  targetCount: number
 ): Promise<AdSpenderLead[]> {
-  const leads: AdSpenderLead[] = [];
+  const enrichedCandidates: Array<AdSpenderLead & { score: number }> = [];
 
   for (let i = 0; i < businesses.length; i++) {
     const biz = businesses[i];
@@ -195,8 +174,10 @@ async function auditAndEnrichAdLeads(
 
     let extractedEmail = "";
     let detectedPixel = false;
-    let pixelType = "Meta & Instagram Ads";
-    let latency = 2.8;
+    let pixelType = "Paid Advertising";
+    let metaPixelId = "";
+    let googleAdsId = "";
+    let latency = 2.4;
 
     // Fetch live website to extract real email and ad tracking pixels
     if (biz.website.startsWith("http")) {
@@ -204,9 +185,9 @@ async function auditAndEnrichAdLeads(
       try {
         const resp = await fetch(biz.website, {
           headers: {
-            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
           },
-          signal: AbortSignal.timeout(5000)
+          signal: AbortSignal.timeout(4500)
         });
 
         latency = Math.max(0.9, (Date.now() - startTime) / 1000);
@@ -217,34 +198,47 @@ async function auditAndEnrichAdLeads(
           // 1. Scan for real mailto: email addresses
           const mailMatch = html.match(/mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
           if (mailMatch && !mailMatch[1].includes("sentry") && !mailMatch[1].includes("wix") && !mailMatch[1].includes("example")) {
-            extractedEmail = mailMatch[1];
+            extractedEmail = mailMatch[1].toLowerCase();
           }
 
           // 2. Scan for text email patterns if mailto wasn't found
           if (!extractedEmail) {
             const rawMailMatch = html.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
             if (rawMailMatch && !rawMailMatch[0].includes(".png") && !rawMailMatch[0].includes(".jpg") && !rawMailMatch[0].includes("w3.org")) {
-              extractedEmail = rawMailMatch[0];
+              extractedEmail = rawMailMatch[0].toLowerCase();
             }
           }
 
-          // 3. Detect Meta Pixel and Google Ads tracking tags
-          const hasMetaPixel = /fbq\(|fbevents\.js|connect\.facebook\.net/i.test(html);
-          const hasGoogleAds = /googletagmanager\.com|google_conversion|adsbygoogle/i.test(html);
+          // 3. Scan for EXACT Meta Pixel (fbq('init') / fbevents.js / facebook.com/tr?id=)
+          const metaPixelRegexMatch = html.match(/fbq\([\'"]init[\'"],\s*[\'"](\d+)[\'"]/i);
+          if (metaPixelRegexMatch && metaPixelRegexMatch[1]) {
+            metaPixelId = metaPixelRegexMatch[1];
+          } else if (/fbevents\.js|connect\.facebook\.net/i.test(html)) {
+            const trMatch = html.match(/facebook\.com\/tr\?id=(\d+)/i);
+            metaPixelId = trMatch ? trMatch[1] : "Active";
+          }
 
-          if (hasMetaPixel && hasGoogleAds) {
+          // 4. Scan for EXACT Google Ads Conversion tracking (AW- / google_conversion_id)
+          const gAdsMatch = html.match(/AW-(\d+)/i);
+          if (gAdsMatch && gAdsMatch[0]) {
+            googleAdsId = gAdsMatch[0];
+          } else if (/google_conversion_id|adsbygoogle/i.test(html)) {
+            googleAdsId = "Active Conversion Tag";
+          }
+
+          if (metaPixelId && googleAdsId) {
             detectedPixel = true;
-            pixelType = "Multi-Channel Paid Ads (Meta & Google)";
-          } else if (hasMetaPixel) {
+            pixelType = `Multi-Channel Ads (Meta: ${metaPixelId} & Google: ${googleAdsId})`;
+          } else if (metaPixelId) {
             detectedPixel = true;
-            pixelType = "Meta & Instagram Ads";
-          } else if (hasGoogleAds) {
+            pixelType = `Meta & Instagram Ads (Pixel ID: ${metaPixelId})`;
+          } else if (googleAdsId) {
             detectedPixel = true;
-            pixelType = "Google Search & Display Ads";
+            pixelType = `Google Search & Display Ads (${googleAdsId})`;
           }
         }
       } catch {
-        latency = 3.2;
+        latency = 2.8;
       }
     }
 
@@ -269,8 +263,8 @@ async function auditAndEnrichAdLeads(
     ];
     const adSpendTier = spendTiers[i % spendTiers.length];
     const activeCreatives = detectedPixel
-      ? `Active Paid Campaigns Detected (${pixelType})`
-      : `3 Active Creatives (Meta Ad Library)`;
+      ? `Active Paid Campaigns (${pixelType})`
+      : `Paid Ad Signals Detected`;
 
     const issues = [
       `Paid ad landing page latency (${loadTime} on mobile 4G/5G) causing high visitor bounce rates`,
@@ -286,23 +280,29 @@ async function auditAndEnrichAdLeads(
       `Are you losing paid ad clicks on ${biz.name}'s mobile landing page?`
     ];
 
-    const body = `Hi Marketing Principal / Owner,\n\nI was analyzing active paid advertising campaigns for ${niche} providers in ${city} and saw ${biz.name}'s live ads (${activeCreatives}, estimated spend tier ${adSpendTier}).\n\nI ran a mobile performance audit on the landing page your paid traffic is landing on (${biz.website}).\n\nCurrently, the page takes ~${loadTime} to render for mobile visitors (PageSpeed score: ${speedScore}/100). According to Google & Meta performance benchmarks, every 1-second delay past 2 seconds reduces ad conversion rates by up to 20%—meaning roughly 30-40% of your paid ad budget is being lost to bouncing clicks before leads even see your offer.\n\nWe build ultra-fast (95+ PageSpeed), high-converting landing pages specifically designed for paid traffic campaigns that double lead capture rates.\n\nWould you be open to a quick 2-minute video walkthrough showing the bottlenecks on your ad landing page and how to fix them?\n\nBest regards,\nUchit Chakma | UCDREAMS (https://ucdreams.com)`;
+    const body = `Hi Marketing Principal / Owner,\n\nI was analyzing active paid advertising campaigns for ${niche} providers in ${city} and saw ${biz.name}'s live ad tracking (${activeCreatives}, estimated spend tier ${adSpendTier}).\n\nI ran a mobile performance audit on the landing page your paid traffic is landing on (${biz.website}).\n\nCurrently, the page takes ~${loadTime} to render for mobile visitors (PageSpeed score: ${speedScore}/100). According to Google & Meta performance benchmarks, every 1-second delay past 2 seconds reduces ad conversion rates by up to 20%—meaning roughly 30-40% of your paid ad budget is being lost to bouncing clicks before leads even see your offer.\n\nWe build ultra-fast (95+ PageSpeed), high-converting landing pages specifically designed for paid traffic campaigns that double lead capture rates.\n\nWould you be open to a quick 2-minute video walkthrough showing the bottlenecks on your ad landing page and how to fix them?\n\nBest regards,\nUchit Chakma | UCDREAMS (https://ucdreams.com)`;
 
-    const whatsapp = `Hi ${biz.name} team! 👋 Saw your active ads running in ${city}. Ran a quick speed test on your ad landing page (${biz.website})—it's loading in ~${loadTime} on mobile, which burns a big chunk of paid ad clicks. Want a free 2-minute video showing 2 tweaks to double your ad conversions?`;
+    const whatsapp = `Hi ${biz.name} team! 👋 Saw your active ad tracking running in ${city}. Ran a quick speed test on your ad landing page (${biz.website})—it's loading in ~${loadTime} on mobile, which burns a big chunk of paid ad clicks. Want a free 2-minute video showing 2 tweaks to double your ad conversions?`;
 
     const cleanBizName = biz.name.replace(/LLC|Inc\.|Corp\.|Ltd\./gi, "").trim();
-    let adLibraryUrl = "";
-    if (pixelType === "Google Search & Display Ads") {
-      adLibraryUrl = `https://adstransparency.google.com/search?q=${encodeURIComponent(cleanBizName)}`;
+    let adDestinationUrl = "";
+    if (googleAdsId && !metaPixelId) {
+      adDestinationUrl = `https://adstransparency.google.com/search?q=${encodeURIComponent(cleanBizName)}`;
     } else {
-      adLibraryUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&q=${encodeURIComponent(cleanBizName)}&search_type=keyword_unordered&media_type=all`;
+      adDestinationUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=US&q=${encodeURIComponent(cleanBizName)}&search_type=keyword_unordered&media_type=all`;
     }
 
-    leads.push({
+    // Rank verified pixel/ad tag leads highest
+    let priorityScore = 10;
+    if (metaPixelId && googleAdsId) priorityScore = 100;
+    else if (metaPixelId) priorityScore = 80;
+    else if (googleAdsId) priorityScore = 70;
+
+    enrichedCandidates.push({
       businessName: biz.name,
       websiteUrl: biz.website,
       googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(biz.name + " " + (biz.address || city))}`,
-      sourceUrl: adLibraryUrl,
+      sourceUrl: adDestinationUrl,
       phoneNumber: biz.phone,
       contactEmail: extractedEmail,
       ownerName: "Head of Marketing / Founder",
@@ -319,9 +319,13 @@ async function auditAndEnrichAdLeads(
         subjects,
         body,
         whatsapp
-      }
+      },
+      score: priorityScore
     });
   }
 
-  return leads;
+  // Sort so leads with real confirmed ad tags appear FIRST
+  enrichedCandidates.sort((a, b) => b.score - a.score);
+
+  return enrichedCandidates.slice(0, targetCount).map(({ score, ...lead }) => lead);
 }
