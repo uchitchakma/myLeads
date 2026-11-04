@@ -9,8 +9,15 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    let scope = "my";
+    try {
+      const body = await req.json();
+      if (body?.scope) scope = body.scope;
+    } catch {}
+
     const isAdmin = session.role === "ADMIN";
-    const result = cleanDuplicateLeads(session.userId, isAdmin);
+    const cleanAll = isAdmin && scope === "all";
+    const result = cleanDuplicateLeads(session.userId, cleanAll);
 
     return NextResponse.json({
       success: true,

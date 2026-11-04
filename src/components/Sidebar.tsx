@@ -7,6 +7,7 @@ import {
   Search, 
   Database, 
   Users, 
+  Layers, 
   Settings,
   LogOut, 
   ShieldCheck, 
@@ -81,7 +82,7 @@ export default function Sidebar() {
       icon: Search
     },
     {
-      label: user?.role === "ADMIN" ? "Leads Database" : "Leads Database",
+      label: "My Leads",
       href: "/leads",
       icon: Database
     },
@@ -103,6 +104,12 @@ export default function Sidebar() {
   ];
 
   const adminItems = [
+    {
+      label: "Master Leads DB",
+      href: "/admin/leads",
+      icon: Layers,
+      badge: "All Users"
+    },
     {
       label: "User Management",
       href: "/admin/users",

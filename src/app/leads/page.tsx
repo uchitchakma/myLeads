@@ -151,7 +151,7 @@ export default function LeadsPage() {
     try {
       setLoading(true);
       const [leadsRes, campRes, userRes] = await Promise.all([
-        fetch("/api/leads"),
+        fetch("/api/leads?scope=my"),
         fetch("/api/campaigns"),
         fetch("/api/auth/me")
       ]);
@@ -232,7 +232,11 @@ export default function LeadsPage() {
   const handleCleanDuplicates = async () => {
     setCleaningDuplicates(true);
     try {
-      const res = await fetch("/api/leads/clean", { method: "POST" });
+      const res = await fetch("/api/leads/clean", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope: "my" })
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Deduplication failed");
       
@@ -423,15 +427,31 @@ export default function LeadsPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-main)] tracking-tight">
-                {user?.role === "ADMIN" ? "Master Leads Database" : "Pure Leads Database"}
+                My Harvested Leads
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#C5453E]/15 text-[#C5453E] border border-[#C5453E]/30 font-mono">
                 {leads.length} Records
               </span>
             </div>
             <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1">
-              Explore pure audited B2B data, eliminate duplicates, and group high-intent leads into targeted campaigns.
+              Explore your personally harvested B2B leads, track conversion readiness, and launch outreach.
             </p>
+
+            {/* Quick Admin Navigation Switcher */}
+            {user?.role === "ADMIN" && (
+              <div className="flex items-center gap-2 mt-3">
+                <span className="px-3 py-1 rounded-lg bg-[#C5453E] text-white text-xs font-semibold shadow-xs">
+                  My Leads ({leads.length})
+                </span>
+                <Link
+                  href="/admin/leads"
+                  className="px-3 py-1 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] text-xs font-medium text-[var(--text-muted)] hover:text-[#C5453E] hover:border-[#C5453E]/40 transition flex items-center gap-1.5"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Master Database (All Users) →</span>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}

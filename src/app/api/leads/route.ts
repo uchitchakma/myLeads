@@ -8,12 +8,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(req.url);
+  const scope = searchParams.get("scope"); // 'all' or 'my'
   const isAdmin = session.role === "ADMIN";
-  const leads = getLeads(session.userId, isAdmin);
+
+  // If scope === 'all' and user is admin, fetch all leads across all users.
+  // Otherwise, default to user's own harvested leads.
+  const fetchAll = isAdmin && scope === "all";
+  const leads = getLeads(session.userId, fetchAll);
 
   return NextResponse.json({
     leads,
     isAdmin,
+    scope: fetchAll ? "all" : "my",
     count: leads.length
   });
 }

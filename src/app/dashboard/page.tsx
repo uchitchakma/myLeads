@@ -45,7 +45,7 @@ export default function DashboardPage() {
   useEffect(() => {
     Promise.all([
       fetch("/api/auth/me").then(r => r.json()),
-      fetch("/api/leads").then(r => r.json()),
+      fetch("/api/leads?scope=all").then(r => r.json()),
       fetch("/api/campaigns").then(r => r.json())
     ]).then(([authData, leadsData, campData]) => {
       if (authData.authenticated && authData.user) {
