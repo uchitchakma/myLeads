@@ -254,12 +254,56 @@ async function inspectLiveWebsite(url: string, businessName: string): Promise<{
 /**
  * Main Live Harvester Runner
  */
-export async function runTechnique1Harvester(niche: string, city: string, count: number = 5): Promise<ScrapedResult[]> {
+export async function runTechnique1Harvester(niche: string, city: string, count: number = 5, apiKey?: string): Promise<ScrapedResult[]> {
   const cleanNiche = niche.trim();
   const cleanCity = city.trim();
 
-  // 1. Fetch real physical businesses from OpenStreetMap database
-  const rawBusinesses = await queryOsmBusinesses(cleanNiche, cleanCity, count);
+  let rawBusinesses: Array<{ name: string; website: string; phone: string; city: string; category: string }> = [];
+
+  if (apiKey && apiKey.trim().length > 10) {
+    try {
+      const placesUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(cleanNiche + " in " + cleanCity)}&key=${apiKey.trim()}`;
+      const res = await fetch(placesUrl, { signal: AbortSignal.timeout(7000) });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.results && Array.isArray(data.results)) {
+          for (const item of data.results.slice(0, count * 2)) {
+            if (!item.name) continue;
+            let website = "";
+            let phone = "";
+            if (item.place_id) {
+              try {
+                const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${item.place_id}&fields=name,website,formatted_phone_number&key=${apiKey.trim()}`;
+                const detailRes = await fetch(detailUrl, { signal: AbortSignal.timeout(4000) });
+                if (detailRes.ok) {
+                  const detailData = await detailRes.json();
+                  if (detailData.result) {
+                    website = detailData.result.website || "";
+                    phone = detailData.result.formatted_phone_number || "";
+                  }
+                }
+              } catch {}
+            }
+            if (website) {
+              rawBusinesses.push({
+                name: item.name,
+                website,
+                phone: phone || "+1 (800) 555-0199",
+                city: item.formatted_address || cleanCity,
+                category: cleanNiche
+              });
+            }
+            if (rawBusinesses.length >= count) break;
+          }
+        }
+      }
+    } catch {}
+  }
+
+  if (rawBusinesses.length === 0) {
+    rawBusinesses = await queryOsmBusinesses(cleanNiche, cleanCity, count);
+  }
+
   const results: ScrapedResult[] = [];
 
   for (const biz of rawBusinesses) {
@@ -282,7 +326,7 @@ export async function runTechnique1Harvester(niche: string, city: string, count:
       `3 mobile performance fixes for ${biz.name}`
     ];
 
-    const body = `Hi ${liveInspection.owner},\n\nI was looking at your website (${biz.website}) and ran a quick mobile performance audit.\n\nYour site currently scores ${speedScore}/100 on mobile devices (taking ~${loadTime} to fully load for local visitors). According to Google's data, sites taking over 3 seconds lose roughly 35-40% of potential customer inquiries.\n\nHere are the top bottlenecks we detected:\n${liveInspection.issues.map(iss => `  • ${iss}`).join("\n")}\n\nI specialize in building ultra-fast, modern web applications that load in under 1.5s to maximize local customer conversions.\n\nWould you be open to a quick 2-minute video showing how we can get your speed to 95+ and double your mobile leads?\n\nBest regards,\nAlex | Web Architect`;
+    const body = `Hi ${liveInspection.owner},\n\nI was looking at your website (${biz.website}) and ran a quick mobile performance audit.\n\nYour site currently scores ${speedScore}/100 on mobile devices (taking ~${loadTime} to fully load for local visitors). According to Google's data, sites taking over 3 seconds lose roughly 35-40% of potential customer inquiries.\n\nHere are the top bottlenecks we detected:\n${liveInspection.issues.map(iss => `  • ${iss}`).join("\n")}\n\nI specialize in building ultra-fast, modern web applications that load in under 1.5s to maximize local customer conversions.\n\nWould you be open to a quick 2-minute video showing how we can get your speed to 95+ and double your mobile leads?\n\nBest regards,\nUchit Chakma | UCDREAMS (https://ucdreams.com)`;
 
     const whatsapp = `Hi! 👋 I noticed ${biz.name}'s website (${biz.website}) loads in ~${loadTime} on mobile (score: ${speedScore}/100). Fixing a couple of script & image bottlenecks can cut load time in half and increase calls. Want a free 2-min video breakdown?`;
 

@@ -110,31 +110,31 @@ export async function POST(req: NextRequest) {
           sourceTags.push("GOOGLE_MAPS");
         }
         if (requestedSources.includes("LINKEDIN_XRAY")) {
-          promises.push(harvestLinkedInLeads(singleNiche, singleCity, perCombinationCount));
+          promises.push(harvestLinkedInLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("LINKEDIN_XRAY");
         }
         if (requestedSources.includes("HIRING_SIGNALS")) {
-          promises.push(harvestHiringLeads(singleNiche, singleCity, perCombinationCount));
+          promises.push(harvestHiringLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("HIRING_SIGNALS");
         }
         if (requestedSources.includes("YELLOW_PAGES")) {
-          promises.push(harvestYellowPagesLeads(singleNiche, singleCity, perCombinationCount));
+          promises.push(harvestYellowPagesLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("YELLOW_PAGES");
         }
         if (requestedSources.includes("META_WHATSAPP")) {
-          promises.push(harvestMetaWhatsAppLeads(singleNiche, singleCity, perCombinationCount));
+          promises.push(harvestMetaWhatsAppLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("META_WHATSAPP");
         }
         if (requestedSources.includes("CLUTCH_B2B")) {
-          promises.push(harvestClutchLeads(singleNiche, singleCity, perCombinationCount));
+          promises.push(harvestClutchLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("CLUTCH_B2B");
         }
         if (requestedSources.includes("BBB_TRUST")) {
-          promises.push(harvestBBBLeads(singleNiche, singleCity, perCombinationCount));
+          promises.push(harvestBBBLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("BBB_TRUST");
         }
         if (requestedSources.includes("OPEN_STREET_MAP")) {
-          promises.push(runTechnique1Harvester(singleNiche, singleCity, perCombinationCount));
+          promises.push(runTechnique1Harvester(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("OPEN_STREET_MAP");
         }
         if (requestedSources.includes("YELP")) {
