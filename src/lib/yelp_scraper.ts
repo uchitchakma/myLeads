@@ -199,7 +199,7 @@ async function enrichAndAuditYelpLeads(
       `${item.name} website vs Yelp lead conversion`
     ];
 
-    const body = `Hi ${item.name} Team,\n\nI was researching top-rated ${niche} providers in ${city} and came across your impressive ${item.rating}★ Yelp profile with ${item.reviews} verified reviews.\n\nHowever, when local prospects click through to your web presence, mobile pages take ~${loadTime} to render, causing roughly 35% of potential inquiries to drop off.\n\nWe build high-converting lead engines that turn your stellar Yelp reputation directly into phone calls and scheduled appointments.\n\nWould you be open to a quick 2-minute video breakdown of how you compare to local competitors?\n\nBest regards,\nAlex | Growth Strategist`;
+    const body = `Hi ${item.name} Team,\n\nI was researching top-rated ${niche} providers in ${city} and came across your impressive ${item.rating}★ Yelp profile with ${item.reviews} verified reviews.\n\nHowever, when local prospects click through to your web presence, mobile pages take ~${loadTime} to render, causing roughly 35% of potential inquiries to drop off.\n\nWe build high-converting lead engines that turn your stellar Yelp reputation directly into phone calls and scheduled appointments.\n\nWould you be open to a quick 2-minute video breakdown of how you compare to local competitors?\n\nBest regards,\nUchit Chakma | UCDREAMS (https://ucdreams.com)`;
 
     const whatsapp = `Hi ${item.name}! I saw your great ${item.rating}★ Yelp profile (${item.reviews} reviews). We help local ${niche} businesses convert their Yelp traffic into 2x more booked calls with sub-second mobile pages. Open to a quick 2-min breakdown?`;
 

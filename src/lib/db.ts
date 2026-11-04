@@ -466,7 +466,7 @@ export function createCampaign(data: {
     status: data.status || "DRAFT",
     pitchGoal: data.pitchGoal || "SALES",
     emailSubject: data.emailSubject || "Quick question regarding {{businessName}}",
-    emailBody: data.emailBody || "Hi {{ownerName}},\n\nI noticed {{businessName}} in {{city}} and wanted to reach out regarding our B2B growth solutions...\n\nBest regards,\nAlex",
+    emailBody: data.emailBody || "Hi {{ownerName}},\n\nI noticed {{businessName}} in {{city}} and wanted to reach out regarding our B2B growth solutions...\n\nBest regards,\nUchit Chakma\nFounder & Technical Director | UCDREAMS\nhttps://ucdreams.com",
     leadIds: data.leadIds || [],
     stats: {
       totalLeads: (data.leadIds || []).length,

@@ -9,7 +9,6 @@ import {
   Users, 
   Settings,
   LogOut, 
-  Flame, 
   ShieldCheck, 
   Sun,
   Moon,
@@ -234,12 +233,10 @@ export default function Sidebar() {
             <Menu className="w-5 h-5" />
           </button>
 
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#C5453E] flex items-center justify-center text-white shadow-md shadow-[#C5453E]/20">
-              <Flame className="w-5 h-5 fill-white" />
-            </div>
-            <span className="font-bold text-base text-[var(--text-main)] tracking-tight">
-              LeadFlow <span className="text-[9px] px-1 py-0.2 rounded bg-[#C5453E]/15 text-[#C5453E] border border-[#C5453E]/30 font-semibold">PRO</span>
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <img src="/logo-icon.svg" alt="myLeads logo" className="w-8 h-8 object-contain drop-shadow-sm" />
+            <span className="font-bold text-base text-[var(--text-main)] tracking-tight flex items-center gap-1.5">
+              myLeads <span className="text-[9px] px-1 py-0.2 rounded bg-[#C5453E]/15 text-[#C5453E] border border-[#C5453E]/30 font-semibold">PRO</span>
             </span>
           </Link>
         </div>
@@ -275,17 +272,15 @@ export default function Sidebar() {
             {/* Drawer Header */}
             <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#C5453E] flex items-center justify-center shadow-md shadow-[#C5453E]/20 text-white">
-                  <Flame className="w-5 h-5 fill-white" />
-                </div>
+                <img src="/logo-icon.svg" alt="myLeads logo" className="w-9 h-9 object-contain drop-shadow-md" />
                 <div>
                   <div className="font-bold text-base text-[var(--text-main)] tracking-tight flex items-center gap-1">
-                    LeadFlow
+                    myLeads
                     <span className="text-[9px] px-1 py-0.2 rounded bg-[#C5453E]/15 text-[#C5453E] border border-[#C5453E]/30 font-semibold">
                       PRO
                     </span>
                   </div>
-                  <div className="text-[11px] text-[var(--text-muted)]">Client Engine</div>
+                  <div className="text-[11px] text-[var(--text-muted)]">Autonomous Client Engine</div>
                 </div>
               </div>
 
@@ -308,17 +303,15 @@ export default function Sidebar() {
         {/* Brand Header */}
         <div className="p-5 border-b border-[var(--border-subtle)] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#C5453E] flex items-center justify-center shadow-lg shadow-[#C5453E]/20 text-white">
-              <Flame className="w-6 h-6 fill-white" />
-            </div>
+            <img src="/logo-icon.svg" alt="myLeads logo" className="w-10 h-10 object-contain drop-shadow-md" />
             <div>
               <div className="font-bold text-lg text-[var(--text-main)] tracking-tight flex items-center gap-1.5">
-                LeadFlow
+                myLeads
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#C5453E]/15 text-[#C5453E] border border-[#C5453E]/30 font-semibold">
                   PRO
                 </span>
               </div>
-              <div className="text-xs text-[var(--text-muted)]">Client Engine</div>
+              <div className="text-xs text-[var(--text-muted)]">Autonomous Client Engine</div>
             </div>
           </div>
 

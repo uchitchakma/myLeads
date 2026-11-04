@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 76" width="100%" height="100%">
+  <defs>
+    <linearGradient id="logoPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5A4F" />
+      <stop offset="50%" stop-color="#C5453E" />
+      <stop offset="100%" stop-color="#9E2A24" />
+    </linearGradient>
+    <linearGradient id="flameAccent" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF9B38" />
+      <stop offset="100%" stop-color="#FFD166" />
+    </linearGradient>
+    <filter id="logoShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#C5453E" flood-opacity="0.32" />
+    </filter>
+  </defs>
+
+  <!-- Left Icon Mark -->
+  <g transform="translate(6, 6)">
+    <rect x="0" y="0" width="64" height="64" rx="18" fill="url(#logoPrimary)" filter="url(#logoShadow)" />
+    <rect x="0.5" y="0.5" width="63" height="63" rx="17.5" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1" />
+    
+    <!-- Inner Emblem -->
+    <g transform="translate(32, 32) scale(0.64)">
+      <circle cx="0" cy="0" r="32" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-dasharray="3,3" />
+      <path d="M-22, 18 L-22, -8 C-22, -14 -16, -17 -11, -12 L0, -2 L11, -12 C16, -17 22, -14 22, -8 L22, 18 C22, 21 19, 23 16, 23 C13, 23 10, 21 10, 18 L10, -1 L3, 6 C1, 8 -1, 8 -3, 6 L-10, -1 L-10, 18 C-10, 21 -13, 23 -16, 23 C-19, 23 -22, 21 -22, 18 Z" fill="#FFFFFF" />
+      <path d="M-6, 12 C-6, 6 0, -18 0, -22 C0, -18 6, 6 6, 12 C6, 16 3, 19 0, 19 C-3, 19 -6, 16 -6, 12 Z" fill="url(#flameAccent)" />
+      <circle cx="0" cy="-26" r="2.8" fill="#FFFFFF" />
+    </g>
+  </g>
+
+  <!-- Right Typography -->
+  <g transform="translate(86, 14)">
+    <!-- "my" text (clean grey/white depending on theme) -->
+    <text x="0" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="600" fill="#FFFFFF" letter-spacing="-0.5">my</text>
+    
+    <!-- "Leads" text (brand crimson with subtle glow) -->
+    <text x="44" y="32" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="800" fill="#E2584F" letter-spacing="-0.5">Leads</text>
+    
+    <!-- PRO Pill Badge -->
+    <g transform="translate(142, 11)">
+      <rect x="0" y="0" width="38" height="19" rx="5" fill="#C5453E" fill-opacity="0.18" stroke="#C5453E" stroke-opacity="0.4" stroke-width="1" />
+      <text x="19" y="14" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="10.5" font-weight="700" fill="#E2584F" text-anchor="middle" letter-spacing="0.5">PRO</text>
+    </g>
+
+    <!-- Subtitle: "AUTONOMOUS CLIENT ENGINE" -->
+    <text x="1" y="49" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="9" font-weight="600" fill="#9BA3AF" letter-spacing="1.8">AUTONOMOUS CLIENT ENGINE</text>
+  </g>
+</svg>

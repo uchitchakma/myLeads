@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Flame, Lock, Mail, ArrowRight, Sun, Moon } from "lucide-react";
+import { Lock, Mail, ArrowRight, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
 export default function LoginPage() {
@@ -58,10 +58,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md card-glass p-8 relative z-10 border border-[var(--border-subtle)] shadow-xl backdrop-blur-xl bg-[var(--bg-card)]">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[#C5453E] flex items-center justify-center shadow-xl shadow-[#C5453E]/30 text-white mb-3">
-            <Flame className="w-7 h-7 fill-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-[var(--text-main)] tracking-tight">Welcome to LeadFlow</h1>
+          <img src="/logo-icon.svg" alt="myLeads" className="w-14 h-14 mb-3 drop-shadow-lg" />
+          <h1 className="text-2xl font-bold text-[var(--text-main)] tracking-tight">Welcome to myLeads</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">Autonomous Lead Discovery & Client Engine</p>
         </div>
 

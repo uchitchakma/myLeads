@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       let subject = customSubject || lead.aiPitch?.subjects?.[0] || `Quick question regarding ${lead.businessName}'s website`;
       let body = useAiPitch && lead.aiPitch?.body 
         ? lead.aiPitch.body 
-        : (customBody || "Hello {{ownerName}},\n\nI was looking at {{businessName}} and wanted to share a quick mobile performance audit...\n\nBest regards,\nAlex");
+        : (customBody || "Hello {{ownerName}},\n\nI was looking at {{businessName}} and wanted to share a quick mobile performance audit...\n\nBest regards,\nUchit Chakma\nFounder & Technical Director | UCDREAMS\nhttps://ucdreams.com");
 
       // Replace template merge variables
       const mergeVars: Record<string, string> = {
