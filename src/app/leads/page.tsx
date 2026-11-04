@@ -43,7 +43,11 @@ import {
   Megaphone,
   Hammer,
   ShoppingBag,
-  AlertTriangle
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from "lucide-react";
 import Link from "next/link";
 import { getVerifiedChannelUrl } from "@/lib/url_validator";
@@ -59,6 +63,10 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [campaignFilter, setCampaignFilter] = useState("ALL");
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(25);
 
   // Selection & UI State
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -300,10 +308,12 @@ export default function LeadsPage() {
   };
 
   const handleSelectAll = () => {
-    if (selectedIds.length === filteredLeads.length) {
-      setSelectedIds([]);
+    const pageIds = paginatedLeads.map(l => l.id);
+    const allSelectedOnPage = pageIds.length > 0 && pageIds.every(id => selectedIds.includes(id));
+    if (allSelectedOnPage) {
+      setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
     } else {
-      setSelectedIds(filteredLeads.map(l => l.id));
+      setSelectedIds(prev => Array.from(new Set([...prev, ...pageIds])));
     }
   };
 
@@ -357,6 +367,37 @@ export default function LeadsPage() {
 
     return matchesSearch && matchesStatus && matchesCategory && matchesCampaign;
   });
+
+  // Pagination Calculations
+  const totalLeads = filteredLeads.length;
+  const totalPages = pageSize === -1 ? 1 : Math.max(1, Math.ceil(totalLeads / pageSize));
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedLeads = pageSize === -1 
+    ? filteredLeads 
+    : filteredLeads.slice((validCurrentPage - 1) * pageSize, validCurrentPage * pageSize);
+
+  const startRecord = totalLeads === 0 ? 0 : (validCurrentPage - 1) * (pageSize === -1 ? totalLeads : pageSize) + 1;
+  const endRecord = pageSize === -1 ? totalLeads : Math.min(validCurrentPage * pageSize, totalLeads);
+
+  // Helper for smart page numbers (e.g. 1, 2, ..., 5, 6, ..., 12)
+  const getPageNumbers = (current: number, total: number): (number | string)[] => {
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    if (current <= 4) {
+      return [1, 2, 3, 4, 5, "...", total];
+    }
+    if (current >= total - 3) {
+      return [1, "...", total - 4, total - 3, total - 2, total - 1, total];
+    }
+    return [1, "...", current - 1, current, current + 1, "...", total];
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, categoryFilter, campaignFilter, pageSize]);
 
   return (
     <div className="flex min-h-screen bg-[var(--bg-main)] transition-colors">
@@ -482,9 +523,19 @@ export default function LeadsPage() {
           {/* Bulk Action Sticky Bar (When Items Selected) */}
           {selectedIds.length > 0 && (
             <div className="flex items-center justify-between p-3 rounded-xl bg-[#C5453E]/10 border border-[#C5453E]/30 animate-in fade-in">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#C5453E]">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>{selectedIds.length} leads selected</span>
+              <div className="flex items-center gap-3 text-xs font-semibold text-[#C5453E]">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{selectedIds.length} leads selected</span>
+                </div>
+                {selectedIds.length < filteredLeads.length && (
+                  <button
+                    onClick={() => setSelectedIds(filteredLeads.map(l => l.id))}
+                    className="text-xs underline hover:text-[#b03d37] font-medium transition cursor-pointer"
+                  >
+                    Select all {filteredLeads.length} leads
+                  </button>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -527,7 +578,7 @@ export default function LeadsPage() {
                   <th className="py-3.5 px-4 w-12 text-center">
                     <input
                       type="checkbox"
-                      checked={selectedIds.length > 0 && selectedIds.length === filteredLeads.length}
+                      checked={paginatedLeads.length > 0 && paginatedLeads.every(l => selectedIds.includes(l.id))}
                       onChange={handleSelectAll}
                       className="rounded border-[var(--border-subtle)] text-[#C5453E] focus:ring-[#C5453E]"
                     />
@@ -561,7 +612,7 @@ export default function LeadsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredLeads.map(lead => {
+                  paginatedLeads.map(lead => {
                     const isSelected = selectedIds.includes(lead.id);
                     const isNewBusiness = lead.sourceTechnique === "NEW_BUSINESS_REGISTRATIONS" || (lead.discoverySources && lead.discoverySources.includes("NEW_BUSINESS_REGISTRATIONS"));
                     const isReputation = lead.sourceTechnique === "LOW_RATING_REPUTATION" || (lead.discoverySources && lead.discoverySources.includes("LOW_RATING_REPUTATION"));
@@ -969,6 +1020,110 @@ export default function LeadsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* ---------------- PAGINATION BAR ---------------- */}
+          {totalLeads > 0 && (
+            <div className="p-4 bg-[var(--bg-main)]/60 border-t border-[var(--border-subtle)] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[var(--text-muted)]">
+              {/* Left: Record Range & Rows Per Page */}
+              <div className="flex items-center gap-4 flex-wrap justify-center sm:justify-start">
+                <div>
+                  Showing <span className="font-semibold text-[var(--text-main)]">{startRecord}</span> to{" "}
+                  <span className="font-semibold text-[var(--text-main)]">{endRecord}</span> of{" "}
+                  <span className="font-semibold text-[var(--text-main)]">{totalLeads}</span> leads
+                </div>
+
+                <div className="flex items-center gap-2 border-l border-[var(--border-subtle)] pl-4">
+                  <span className="text-[var(--text-muted)]">Per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={e => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] text-xs text-[var(--text-main)] font-semibold focus:outline-none focus:border-[#C5453E] cursor-pointer"
+                  >
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                    <option value={-1}>All ({totalLeads})</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Right: Page Navigation Buttons */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                  {/* First Page Button */}
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={validCurrentPage === 1}
+                    title="First Page"
+                    className="p-1.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] hover:border-[#C5453E]/40 transition disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                  >
+                    <ChevronsLeft className="w-4 h-4" />
+                  </button>
+
+                  {/* Previous Page Button */}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={validCurrentPage === 1}
+                    title="Previous Page"
+                    className="p-1.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] hover:border-[#C5453E]/40 transition disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  {/* Smart Numbered Pills */}
+                  <div className="flex items-center gap-1 px-1">
+                    {getPageNumbers(validCurrentPage, totalPages).map((p, idx) => {
+                      if (p === "...") {
+                        return (
+                          <span key={`dots-${idx}`} className="px-2 py-1 text-[var(--text-dim)] select-none">
+                            ...
+                          </span>
+                        );
+                      }
+                      const pageNum = Number(p);
+                      const isActive = pageNum === validCurrentPage;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`min-w-[32px] h-8 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                            isActive
+                              ? "bg-[#C5453E] text-white shadow-md shadow-[#C5453E]/25"
+                              : "bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] hover:border-[#C5453E]/40"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Next Page Button */}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={validCurrentPage === totalPages}
+                    title="Next Page"
+                    className="p-1.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] hover:border-[#C5453E]/40 transition disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+
+                  {/* Last Page Button */}
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={validCurrentPage === totalPages}
+                    title="Last Page"
+                    className="p-1.5 rounded-lg bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-main)] hover:bg-[var(--bg-card-hover)] hover:border-[#C5453E]/40 transition disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                  >
+                    <ChevronsRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ---------------- GROUP INTO CAMPAIGN MODAL ---------------- */}
