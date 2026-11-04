@@ -85,9 +85,10 @@ function formatUkDirectorName(rawName: string, role?: string): string {
     formatted = clean;
   }
 
-  const cleanRole = role && role.toLowerCase().includes("director") 
+  const trimmedRole = (role || "").replace(/\s+/g, " ").trim();
+  const cleanRole = trimmedRole.toLowerCase().includes("director") 
     ? "Director" 
-    : (role || "Director");
+    : (trimmedRole || "Director");
   return `${formatted} (${cleanRole})`;
 }
 
@@ -258,9 +259,21 @@ export async function harvestUkCompaniesLeads(
       if (offRes.ok) {
         const offHtml = await offRes.text();
         const officerRegex = /<span id="officer-name-(\d+)">[\s\S]*?<a[^>]*>([\s\S]*?)<\/a>[\s\S]*?<dd id="officer-role-\1"[^>]*>([\s\S]*?)<\/dd>/gi;
-        const offMatch = officerRegex.exec(offHtml);
-        if (offMatch && offMatch[2]) {
-          directorName = formatUkDirectorName(offMatch[2], offMatch[3]);
+        let bestOfficer: { name: string; role: string } | null = null;
+        let offMatch;
+        while ((offMatch = officerRegex.exec(offHtml)) !== null) {
+          const rawOfficerName = offMatch[2].trim();
+          const rawOfficerRole = offMatch[3].replace(/\s+/g, " ").trim();
+          if (rawOfficerRole.toLowerCase().includes("director")) {
+            bestOfficer = { name: rawOfficerName, role: rawOfficerRole };
+            break; // Found director!
+          }
+          if (!bestOfficer) {
+            bestOfficer = { name: rawOfficerName, role: rawOfficerRole };
+          }
+        }
+        if (bestOfficer) {
+          directorName = formatUkDirectorName(bestOfficer.name, bestOfficer.role);
         }
       }
     } catch {
