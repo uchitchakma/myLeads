@@ -73,6 +73,7 @@ export default function AdminSettingsPage() {
       googleMapsApiKey: "",
       yelpApiKey: "",
       geminiApiKey: "",
+      companiesHouseApiKey: "",
       webhookUrl: ""
     },
     security: {
@@ -677,6 +678,22 @@ await fetch("https://myleads.ucdreams.com/api/contact", {
                     {showGeminiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">
+                  Fallback UK Companies House Key (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Government REST API Key (Zero config web stream used if empty)"
+                  value={settings.globalApis.companiesHouseApiKey || ""}
+                  onChange={e => setSettings({
+                    ...settings,
+                    globalApis: { ...settings.globalApis, companiesHouseApiKey: e.target.value.trim() }
+                  })}
+                  className="w-full px-3.5 py-2.5 bg-[var(--bg-main)] border border-[var(--border-subtle)] rounded-xl text-xs sm:text-sm text-[var(--text-main)] focus:outline-none focus:border-[#C5453E]"
+                />
               </div>
 
               <div>

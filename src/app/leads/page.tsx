@@ -44,6 +44,7 @@ import {
   Hammer,
   ShoppingBag,
   AlertTriangle,
+  Landmark,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -634,6 +635,7 @@ export default function LeadsPage() {
                 ) : (
                   paginatedLeads.map(lead => {
                     const isSelected = selectedIds.includes(lead.id);
+                    const isUkCompanies = lead.sourceTechnique === "UK_COMPANIES_HOUSE" || (lead.discoverySources && lead.discoverySources.includes("UK_COMPANIES_HOUSE"));
                     const isNewBusiness = lead.sourceTechnique === "NEW_BUSINESS_REGISTRATIONS" || (lead.discoverySources && lead.discoverySources.includes("NEW_BUSINESS_REGISTRATIONS"));
                     const isReputation = lead.sourceTechnique === "LOW_RATING_REPUTATION" || (lead.discoverySources && lead.discoverySources.includes("LOW_RATING_REPUTATION"));
                     const isShopify = lead.sourceTechnique === "SHOPIFY_ECOMMERCE" || (lead.discoverySources && lead.discoverySources.includes("SHOPIFY_ECOMMERCE"));
@@ -699,7 +701,19 @@ export default function LeadsPage() {
 
                         {/* Discovery Source & 1-Click Profile/Map Link (Unified, High-Value) */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
-                          {isNewBusiness ? (
+                          {isUkCompanies ? (
+                            <a
+                              href={getVerifiedChannelUrl("UK_COMPANIES_HOUSE", lead)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-semibold hover:bg-purple-500/20 transition whitespace-nowrap shadow-xs"
+                              title="Open Official UK Companies House Government Profile"
+                            >
+                              <Landmark className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                              <span>UK Companies</span>
+                              <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                            </a>
+                          ) : isNewBusiness ? (
                             <a
                               href={getVerifiedChannelUrl("NEW_BUSINESS_REGISTRATIONS", lead)}
                               target="_blank"

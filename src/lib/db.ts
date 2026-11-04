@@ -24,6 +24,7 @@ export interface User {
   googleMapsApiKey?: string;
   yelpApiKey?: string;
   geminiApiKey?: string;
+  companiesHouseApiKey?: string;
   smtpConfig?: UserSmtpConfig;
   createdAt: string;
 }
@@ -52,6 +53,8 @@ export interface Lead {
   rating?: number;
   reviewCount?: number;
   address?: string;
+  companyNumber?: string;
+  incorporationDate?: string;
   speedScore: number;
   mobileFriendly: boolean;
   loadTime: string;
@@ -160,6 +163,7 @@ export interface SystemSettings {
     googleMapsApiKey?: string;
     yelpApiKey?: string;
     geminiApiKey?: string;
+    companiesHouseApiKey?: string;
     webhookUrl?: string;
   };
   security: {
@@ -196,6 +200,7 @@ export function getDefaultSystemSettings(): SystemSettings {
       googleMapsApiKey: "",
       yelpApiKey: "",
       geminiApiKey: "",
+      companiesHouseApiKey: "",
       webhookUrl: ""
     },
     security: {

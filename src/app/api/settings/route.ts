@@ -22,6 +22,7 @@ export async function GET() {
       googleMapsApiKey: user.googleMapsApiKey || "",
       yelpApiKey: user.yelpApiKey || "",
       geminiApiKey: user.geminiApiKey || "",
+      companiesHouseApiKey: user.companiesHouseApiKey || "",
       smtpConfig: user.smtpConfig || {
         host: "smtp.gmail.com",
         port: 587,
@@ -41,13 +42,14 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
-    const { name, googleMapsApiKey, yelpApiKey, geminiApiKey, smtpConfig } = await req.json();
+    const { name, googleMapsApiKey, yelpApiKey, geminiApiKey, companiesHouseApiKey, smtpConfig } = await req.json();
 
     const updated = updateUser(session.userId, {
       name: name?.trim(),
       googleMapsApiKey: googleMapsApiKey?.trim() || undefined,
       yelpApiKey: yelpApiKey?.trim() || undefined,
       geminiApiKey: geminiApiKey?.trim() || undefined,
+      companiesHouseApiKey: companiesHouseApiKey?.trim() || undefined,
       smtpConfig: smtpConfig || undefined
     });
 
@@ -62,6 +64,7 @@ export async function PUT(req: NextRequest) {
         googleMapsApiKey: updated.googleMapsApiKey || "",
         yelpApiKey: updated.yelpApiKey || "",
         geminiApiKey: updated.geminiApiKey || "",
+        companiesHouseApiKey: updated.companiesHouseApiKey || "",
         smtpConfig: updated.smtpConfig
       }
     });

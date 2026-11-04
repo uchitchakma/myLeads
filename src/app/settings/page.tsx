@@ -45,6 +45,7 @@ export default function SettingsPage() {
     googleMapsApiKey: "",
     yelpApiKey: "",
     geminiApiKey: "",
+    companiesHouseApiKey: "",
     smtpConfig: {
       host: "smtp.gmail.com",
       port: 587,
@@ -67,6 +68,7 @@ export default function SettingsPage() {
             googleMapsApiKey: data.user.googleMapsApiKey || "",
             yelpApiKey: data.user.yelpApiKey || "",
             geminiApiKey: data.user.geminiApiKey || "",
+            companiesHouseApiKey: data.user.companiesHouseApiKey || "",
             smtpConfig: data.user.smtpConfig || {
               host: "smtp.gmail.com",
               port: 587,

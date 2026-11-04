@@ -29,13 +29,15 @@ import {
   Megaphone,
   Hammer,
   ShoppingBag,
-  AlertTriangle
+  AlertTriangle,
+  Landmark
 } from "lucide-react";
 import Link from "next/link";
 import { getVerifiedChannelUrl } from "@/lib/url_validator";
 
 export default function ScraperPage() {
   const [selectedSources, setSelectedSources] = useState<string[]>([
+    "UK_COMPANIES_HOUSE",
     "NEW_BUSINESS_REGISTRATIONS",
     "LOW_RATING_REPUTATION",
     "SHOPIFY_ECOMMERCE",
@@ -72,6 +74,16 @@ export default function ScraperPage() {
   const cityInputRef = useRef<HTMLInputElement>(null);
 
   const availableSources = [
+    {
+      id: "UK_COMPANIES_HOUSE",
+      name: "UK Companies House (Official Gov.uk)",
+      tag: "Official Directors & Filings",
+      description: "Official UK incorporated entities, registered company numbers, appointed directors & office addresses",
+      icon: Landmark,
+      color: "text-purple-600",
+      bgColor: "bg-purple-600/10",
+      borderColor: "border-purple-600/20"
+    },
     {
       id: "NEW_BUSINESS_REGISTRATIONS",
       name: "New Business Registrations (State Filings)",
@@ -1008,6 +1020,12 @@ export default function ScraperPage() {
                 {/* Source Breakdown Indicators */}
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs">
                   <span className="text-[var(--text-muted)]">Extracted from:</span>
+                  {results.some(r => r.sourceTechnique === "UK_COMPANIES_HOUSE" || r.discoverySources?.includes("UK_COMPANIES_HOUSE")) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 font-semibold font-mono text-[11px]">
+                      <Landmark className="w-3 h-3 text-purple-500" />
+                      <span>{results.filter(r => r.sourceTechnique === "UK_COMPANIES_HOUSE" || r.discoverySources?.includes("UK_COMPANIES_HOUSE")).length} UK Companies</span>
+                    </span>
+                  )}
                   {results.some(r => r.sourceTechnique === "NEW_BUSINESS_REGISTRATIONS" || r.discoverySources?.includes("NEW_BUSINESS_REGISTRATIONS")) && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold font-mono text-[11px]">
                       <Sparkles className="w-3 h-3 text-amber-500" />
@@ -1115,6 +1133,7 @@ export default function ScraperPage() {
                   </thead>
                   <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-muted)]">
                     {results.map((lead, idx) => {
+                      const isUkCompanies = lead.sourceTechnique === "UK_COMPANIES_HOUSE" || (lead.discoverySources && lead.discoverySources.includes("UK_COMPANIES_HOUSE"));
                       const isNewBusiness = lead.sourceTechnique === "NEW_BUSINESS_REGISTRATIONS" || (lead.discoverySources && lead.discoverySources.includes("NEW_BUSINESS_REGISTRATIONS"));
                       const isReputation = lead.sourceTechnique === "LOW_RATING_REPUTATION" || (lead.discoverySources && lead.discoverySources.includes("LOW_RATING_REPUTATION"));
                       const isShopify = lead.sourceTechnique === "SHOPIFY_ECOMMERCE" || (lead.discoverySources && lead.discoverySources.includes("SHOPIFY_ECOMMERCE"));
@@ -1181,7 +1200,19 @@ export default function ScraperPage() {
 
                           {/* Source & Profile Link */}
                           <td className="px-4 py-4 whitespace-nowrap">
-                            {isNewBusiness ? (
+                            {isUkCompanies ? (
+                              <a
+                                href={getVerifiedChannelUrl("UK_COMPANIES_HOUSE", lead)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-semibold hover:bg-purple-500/20 transition whitespace-nowrap shadow-xs"
+                                title="Open Official UK Companies House Government Profile"
+                              >
+                                <Landmark className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                                <span>UK Companies</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-70 shrink-0" />
+                              </a>
+                            ) : isNewBusiness ? (
                               <a
                                 href={getVerifiedChannelUrl("NEW_BUSINESS_REGISTRATIONS", lead)}
                                 target="_blank"

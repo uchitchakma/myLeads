@@ -14,8 +14,9 @@ import { harvestContractorLeads } from "@/lib/contractors_scraper";
 import { harvestShopifyLeads } from "@/lib/shopify_scraper";
 import { harvestReputationLeads } from "@/lib/reputation_scraper";
 import { harvestNewBusinessLeads } from "@/lib/new_business_scraper";
+import { harvestUkCompaniesLeads } from "@/lib/uk_companies_scraper";
 import { auditDomainDeliverability } from "@/lib/dns_deliverability";
-import { createOrUpdateLead, findUserById } from "@/lib/db";
+import { createOrUpdateLead, findUserById, getSystemSettings } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   const session = await getCurrentUser();
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
 
     // Parse requested sources list
     const defaultSources = [
+      "UK_COMPANIES_HOUSE",
       "NEW_BUSINESS_REGISTRATIONS",
       "LOW_RATING_REPUTATION",
       "SHOPIFY_ECOMMERCE",
@@ -85,6 +87,12 @@ export async function POST(req: NextRequest) {
         const promises: Promise<any>[] = [];
         const sourceTags: string[] = [];
 
+        if (requestedSources.includes("UK_COMPANIES_HOUSE")) {
+          const sysSettings = getSystemSettings();
+          const chKey = user?.companiesHouseApiKey || sysSettings.globalApis?.companiesHouseApiKey;
+          promises.push(harvestUkCompaniesLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey, chKey));
+          sourceTags.push("UK_COMPANIES_HOUSE");
+        }
         if (requestedSources.includes("NEW_BUSINESS_REGISTRATIONS")) {
           promises.push(harvestNewBusinessLeads(singleNiche, singleCity, perCombinationCount, user?.googleMapsApiKey));
           sourceTags.push("NEW_BUSINESS_REGISTRATIONS");
@@ -196,6 +204,8 @@ export async function POST(req: NextRequest) {
         status: "AUDITED",
         rating: (item as any).rating,
         reviewCount: (item as any).reviewCount,
+        companyNumber: (item as any).companyNumber,
+        incorporationDate: (item as any).incorporationDate,
         speedScore: item.speedScore,
         mobileFriendly: item.mobileFriendly,
         loadTime: item.loadTime,

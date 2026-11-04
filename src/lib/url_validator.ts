@@ -139,6 +139,12 @@ export function getVerifiedChannelUrl(
     case "OPEN_STREET_MAP":
       return `https://www.openstreetmap.org/search?query=${encodeURIComponent(bizClean + " " + cityClean)}`;
 
+    case "UK_COMPANIES_HOUSE":
+      if (lead.sourceUrl && lead.sourceUrl.includes("company-information.service.gov.uk")) {
+        return lead.sourceUrl;
+      }
+      return `https://find-and-update.company-information.service.gov.uk/search/companies?q=${encodeURIComponent(bizClean + " " + cityClean)}`;
+
     case "GOOGLE_MAPS":
     default:
       if (lead.googleMapsUrl && lead.googleMapsUrl.includes("google.com/maps")) {
