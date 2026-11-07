@@ -34,7 +34,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import Link from "next/link";
-import { getVerifiedChannelUrl } from "@/lib/url_validator";
+import { getVerifiedChannelUrl, getWhatsAppClickUrl } from "@/lib/url_validator";
 
 export default function ScraperPage() {
   const [selectedSources, setSelectedSources] = useState<string[]>([
@@ -1144,6 +1144,7 @@ export default function ScraperPage() {
                       <th className="px-4 py-3.5 min-w-[170px] whitespace-nowrap">Source &amp; Profile Link</th>
                       <th className="px-4 py-3.5 min-w-[150px] whitespace-nowrap">Website</th>
                       <th className="px-4 py-3.5 min-w-[200px]">Contact Details</th>
+                      <th className="px-4 py-3.5 min-w-[170px] whitespace-nowrap">WhatsApp</th>
                       <th className="px-4 py-3.5 min-w-[130px] whitespace-nowrap">Location</th>
                       <th className="px-4 py-3.5 min-w-[110px] whitespace-nowrap">Health Score</th>
                       <th className="px-4 py-3.5 min-w-[120px] text-right whitespace-nowrap">Actions</th>
@@ -1472,6 +1473,40 @@ export default function ScraperPage() {
                                 <span>{lead.phoneNumber}</span>
                               </div>
                             ) : null}
+                          </td>
+
+                          {/* WhatsApp Direct & Availability */}
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            {(() => {
+                              const waUrl = getWhatsAppClickUrl(lead.phoneNumber, lead.aiPitch?.whatsapp, lead.businessName);
+                              if (waUrl && lead.phoneNumber) {
+                                return (
+                                  <div className="flex flex-col gap-1">
+                                    <a
+                                      href={waUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 hover:border-emerald-500/40 text-xs font-semibold transition whitespace-nowrap shadow-xs group"
+                                      title={`Click to open WhatsApp conversation with ${lead.phoneNumber}`}
+                                    >
+                                      <MessageCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 group-hover:scale-110 transition-transform" />
+                                      <span className="font-mono text-[11px] font-medium">{lead.phoneNumber}</span>
+                                      <ExternalLink className="w-2.5 h-2.5 opacity-60 shrink-0 ml-0.5" />
+                                    </a>
+                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 pl-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                      Available • Click to Chat
+                                    </span>
+                                  </div>
+                                );
+                              }
+                              return (
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-main)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-dim)] font-medium whitespace-nowrap opacity-75">
+                                  <MessageCircle className="w-3 h-3 text-[var(--text-dim)] shrink-0 opacity-40" />
+                                  <span>Unavailable</span>
+                                </div>
+                              );
+                            })()}
                           </td>
 
                           {/* City */}

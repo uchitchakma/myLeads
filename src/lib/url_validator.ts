@@ -159,3 +159,38 @@ export function getVerifiedChannelUrl(
       return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bizClean + " " + cityClean)}`;
   }
 }
+
+/**
+ * Normalizes phone numbers to a clean international digits string for WhatsApp wa.me links
+ */
+export function getCleanWhatsAppNumber(phone?: string): string | null {
+  if (!phone) return null;
+  if (phone.includes("wa.me/")) {
+    const m = phone.match(/wa\.me\/(\d+)/);
+    return m ? m[1] : null;
+  }
+  let digits = phone.replace(/\D/g, "");
+  if (!digits || digits.length < 7) return null;
+
+  // Handle US numbers without country code (10 digits)
+  if (digits.length === 10) {
+    digits = "1" + digits;
+  }
+  // Handle UK numbers starting with 0 (11 digits e.g. 020... or 07...)
+  if (digits.startsWith("0") && digits.length === 11) {
+    digits = "44" + digits.slice(1);
+  }
+  return digits;
+}
+
+/**
+ * Returns direct WhatsApp click-to-chat URL with pre-filled outreach pitch
+ */
+export function getWhatsAppClickUrl(phone?: string, pitchText?: string, businessName?: string): string | null {
+  const cleanNumber = getCleanWhatsAppNumber(phone);
+  if (!cleanNumber) return null;
+  const defaultText = `Hi ${businessName ? businessName + " team! " : ""}I came across your business and wanted to share a quick inquiry regarding your digital presence.`;
+  const text = pitchText || defaultText;
+  return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(text)}`;
+}
+

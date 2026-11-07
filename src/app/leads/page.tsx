@@ -52,7 +52,7 @@ import {
   ChevronsRight
 } from "lucide-react";
 import Link from "next/link";
-import { getVerifiedChannelUrl } from "@/lib/url_validator";
+import { getVerifiedChannelUrl, getWhatsAppClickUrl } from "@/lib/url_validator";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -610,6 +610,7 @@ export default function LeadsPage() {
                   <th className="py-3.5 px-4 min-w-[170px] whitespace-nowrap">Source &amp; Profile Link</th>
                   <th className="py-3.5 px-4 min-w-[150px] whitespace-nowrap">Website</th>
                   <th className="py-3.5 px-4 min-w-[210px]">Owner &amp; Contacts</th>
+                  <th className="py-3.5 px-4 min-w-[170px] whitespace-nowrap">WhatsApp</th>
                   <th className="py-3.5 px-4 min-w-[130px] whitespace-nowrap">City</th>
                   <th className="py-3.5 px-4 min-w-[130px] whitespace-nowrap">Campaign</th>
                   <th className="py-3.5 px-4 min-w-[120px] whitespace-nowrap">Speed / Health</th>
@@ -621,14 +622,14 @@ export default function LeadsPage() {
               <tbody className="divide-y divide-[var(--border-subtle)] text-xs text-[var(--text-main)]">
                 {loading ? (
                   <tr>
-                    <td colSpan={11} className="py-16 text-center text-[var(--text-muted)]">
+                    <td colSpan={12} className="py-16 text-center text-[var(--text-muted)]">
                       <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
                       Loading pure database records...
                     </td>
                   </tr>
                 ) : filteredLeads.length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="py-16 text-center text-[var(--text-muted)]">
+                    <td colSpan={12} className="py-16 text-center text-[var(--text-muted)]">
                       <Search className="w-8 h-8 mx-auto mb-2 text-[var(--text-dim)] opacity-50" />
                       No leads match your search criteria.
                     </td>
@@ -967,6 +968,40 @@ export default function LeadsPage() {
                               </a>
                             ) : null}
                           </div>
+                        </td>
+
+                        {/* WhatsApp Direct & Availability */}
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          {(() => {
+                            const waUrl = getWhatsAppClickUrl(lead.phoneNumber, lead.aiPitch?.whatsapp, lead.businessName);
+                            if (waUrl && lead.phoneNumber) {
+                              return (
+                                <div className="flex flex-col gap-1">
+                                  <a
+                                    href={waUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 hover:border-emerald-500/40 text-xs font-semibold transition whitespace-nowrap shadow-xs group"
+                                    title={`Click to open WhatsApp conversation with ${lead.phoneNumber}`}
+                                  >
+                                    <MessageCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 group-hover:scale-110 transition-transform" />
+                                    <span className="font-mono text-[11px] font-medium">{lead.phoneNumber}</span>
+                                    <ExternalLink className="w-2.5 h-2.5 opacity-60 shrink-0 ml-0.5" />
+                                  </a>
+                                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 pl-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    Available • Click to Chat
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return (
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-main)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-dim)] font-medium whitespace-nowrap opacity-75">
+                                <MessageCircle className="w-3 h-3 text-[var(--text-dim)] shrink-0 opacity-40" />
+                                <span>Unavailable</span>
+                              </div>
+                            );
+                          })()}
                         </td>
 
                         {/* City */}

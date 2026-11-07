@@ -22,10 +22,12 @@ import {
   X, 
   RefreshCw, 
   MessageSquare,
+  MessageCircle,
   Sparkles,
   SlidersHorizontal,
   ChevronRight
 } from "lucide-react";
+import { getWhatsAppClickUrl } from "@/lib/url_validator";
 
 interface SentEmailRecord {
   leadId: string;
@@ -310,6 +312,7 @@ export default function SentEmailsPage() {
                       <th className="py-3 px-4">Category & City</th>
                       <th className="py-3 px-4">Dispatched At</th>
                       <th className="py-3 px-4">Delivery</th>
+                      <th className="py-3 px-4">WhatsApp</th>
                       <th className="py-3 px-4 text-right">Inspect Email</th>
                     </tr>
                   </thead>
@@ -375,6 +378,30 @@ export default function SentEmailsPage() {
                               <AlertCircle className="w-3 h-3" /> Lookup Issue
                             </span>
                           )}
+                        </td>
+
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          {(() => {
+                            const waUrl = getWhatsAppClickUrl(item.phoneNumber, item.whatsappPitch, item.businessName);
+                            if (waUrl && item.phoneNumber) {
+                              return (
+                                <a
+                                  href={waUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 text-[11px] font-semibold transition shadow-xs group"
+                                  title={`Click to open WhatsApp follow-up with ${item.phoneNumber}`}
+                                >
+                                  <MessageCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 group-hover:scale-110 transition-transform" />
+                                  <span className="font-mono text-[10px]">{item.phoneNumber}</span>
+                                  <ExternalLink className="w-2.5 h-2.5 opacity-60 shrink-0" />
+                                </a>
+                              );
+                            }
+                            return (
+                              <span className="text-[10px] text-[var(--text-dim)] italic px-1">Unavailable</span>
+                            );
+                          })()}
                         </td>
 
                         <td className="py-3 px-4 text-right whitespace-nowrap">
