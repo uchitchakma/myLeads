@@ -849,6 +849,34 @@ export function recordEmailOpened(leadId?: string, trackingId?: string, userAgen
   return { success: false, openCount: 0 };
 }
 
+export function recordWhatsAppSent(
+  leadId: string,
+  message: string,
+  recipientPhone: string
+): void {
+  const db = readDb();
+  const index = db.leads.findIndex(l => l.id === leadId);
+  if (index !== -1) {
+    if (!db.leads[index].emailHistory) {
+      db.leads[index].emailHistory = [];
+    }
+    db.leads[index].emailHistory!.push({
+      id: `wa_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+      sentAt: new Date().toISOString(),
+      subject: `WhatsApp Direct Pitch to ${recipientPhone}`,
+      status: "WHATSAPP_SENT",
+      body: message,
+      recipientEmail: recipientPhone,
+      openCount: 0
+    });
+    if (db.leads[index].status === "DISCOVERED" || db.leads[index].status === "AUDITED") {
+      db.leads[index].status = "CONTACTED";
+    }
+    db.leads[index].updatedAt = new Date().toISOString();
+    writeDb(db);
+  }
+}
+
 export function deleteLead(leadId: string, requesterId: string, isAdmin: boolean): boolean {
   const db = readDb();
   const lead = db.leads.find(l => l.id === leadId);

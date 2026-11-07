@@ -54,3 +54,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 revenue_tracker*.json
+
+# WhatsApp Baileys Multi-Device auth credentials
+whatsapp_auth/
+*whatsapp_auth*
+whatsapp_session*/
