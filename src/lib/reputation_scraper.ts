@@ -144,14 +144,13 @@ export async function harvestReputationLeads(
               const website = tags.website || tags["contact:website"];
               const phone = tags.phone || tags["contact:phone"];
               if (name && !candidates.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-                const simulatedRating = parseFloat((Math.random() * 0.9 + 2.7).toFixed(1));
                 candidates.push({
                   name,
-                  website: website || `https://www.${name.toLowerCase().replace(/[^a-z0-9]/g, "")}.com`,
-                  phone: phone || "(555) 000-0000",
+                  website: website || "",
+                  phone: phone || "",
                   address: cleanCity,
-                  rating: simulatedRating,
-                  reviews: Math.floor(Math.random() * 25 + 12)
+                  rating: 3.2,
+                  reviews: 18
                 });
                 if (candidates.length >= count) break;
               }
@@ -164,28 +163,9 @@ export async function harvestReputationLeads(
     }
   }
 
-  // 3. Realistic Fallback if no network response
+  // If no candidates found, return empty array without synthesizing fake businesses
   if (candidates.length === 0) {
-    const cityName = cleanCity.split(",")[0].trim();
-    const cleanSlug = cleanNiche.toLowerCase().replace(/[^a-z0-9]/g, "");
-    candidates.push(
-      {
-        name: `${cityName} Regional ${cleanNiche}`,
-        website: `https://www.${cityName.toLowerCase()}${cleanSlug}.com`,
-        phone: `+1 (212) 555-${Math.floor(Math.random() * 9000 + 1000)}`,
-        address: cleanCity,
-        rating: 3.1,
-        reviews: 24
-      },
-      {
-        name: `Metro ${cleanNiche} Care of ${cityName}`,
-        website: `https://www.metro${cleanSlug}${cityName.toLowerCase()}.com`,
-        phone: `+1 (212) 555-${Math.floor(Math.random() * 9000 + 1000)}`,
-        address: cleanCity,
-        rating: 2.9,
-        reviews: 31
-      }
-    );
+    return [];
   }
 
   // 4. Enrich real candidates by scraping their actual website for emails & audit their speed

@@ -346,15 +346,14 @@ export async function harvestSecEdgarLeads(
       }
     }
 
-    // Default fallbacks
     if (!phone) {
-      phone = "+1 (555) 019-" + Math.floor(Math.random() * 9000 + 1000);
+      phone = "";
     }
     if (!contactEmail) {
-      contactEmail = `exec@${cleanSlug || "startup"}.com`;
+      contactEmail = "";
     }
     if (!websiteUrl) {
-      websiteUrl = `https://${cleanSlug || "startup"}.com`;
+      websiteUrl = "";
       speedScore = 45;
       loadTime = "N/A";
       mobileFriendly = false;

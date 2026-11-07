@@ -133,8 +133,8 @@ export async function harvestContractorLeads(
               if (name && !realContractors.some(c => c.name.toLowerCase() === name.toLowerCase())) {
                 realContractors.push({
                   name,
-                  website: website || `https://www.${name.toLowerCase().replace(/[^a-z0-9]/g, "")}.com`,
-                  phone: phone || "(555) 000-0000",
+                  website: website || "",
+                  phone: phone || "",
                   address: cleanCity,
                   rating: 4.9,
                   reviews: 35

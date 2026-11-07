@@ -194,3 +194,169 @@ export function getWhatsAppClickUrl(phone?: string, pitchText?: string, business
   return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(text)}`;
 }
 
+export interface HarvestMethodMeta {
+  key: string;
+  name: string;
+  shortName: string;
+  badgeClass: string;
+  dotColor: string;
+}
+
+export function getHarvestMethodInfo(technique?: string, sources?: string[]): HarvestMethodMeta {
+  const primary = (technique || (sources && sources[0]) || "").toUpperCase();
+
+  if (primary.includes("SEC_EDGAR")) {
+    return {
+      key: "SEC_EDGAR_FUNDED",
+      name: "SEC EDGAR (US Gov)",
+      shortName: "SEC EDGAR",
+      badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25",
+      dotColor: "bg-emerald-500"
+    };
+  }
+  if (primary.includes("UK_COMPANIES")) {
+    return {
+      key: "UK_COMPANIES_HOUSE",
+      name: "UK Companies House",
+      shortName: "UK Companies",
+      badgeClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25",
+      dotColor: "bg-purple-500"
+    };
+  }
+  if (primary.includes("OPEN_STREET_MAP") || primary === "OSM") {
+    return {
+      key: "OPEN_STREET_MAP",
+      name: "OpenStreetMap",
+      shortName: "OpenStreetMap",
+      badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25",
+      dotColor: "bg-emerald-500"
+    };
+  }
+  if (primary.includes("LINKEDIN")) {
+    return {
+      key: "LINKEDIN_XRAY",
+      name: "LinkedIn X-Ray",
+      shortName: "LinkedIn",
+      badgeClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25",
+      dotColor: "bg-sky-500"
+    };
+  }
+  if (primary.includes("SHOPIFY")) {
+    return {
+      key: "SHOPIFY_ECOMMERCE",
+      name: "Shopify DTC",
+      shortName: "Shopify",
+      badgeClass: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25",
+      dotColor: "bg-teal-500"
+    };
+  }
+  if (primary.includes("CONTRACTOR") || primary.includes("HOUZZ")) {
+    return {
+      key: "HIGH_TICKET_CONTRACTORS",
+      name: "Houzz Contractors",
+      shortName: "Contractors",
+      badgeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25",
+      dotColor: "bg-amber-500"
+    };
+  }
+  if (primary.includes("AD_SPENDER")) {
+    return {
+      key: "AD_SPENDERS",
+      name: "Paid Ad Spenders",
+      shortName: "Ad Spenders",
+      badgeClass: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25",
+      dotColor: "bg-rose-500"
+    };
+  }
+  if (primary.includes("HIRING")) {
+    return {
+      key: "HIRING_SIGNALS",
+      name: "Hiring Signals",
+      shortName: "Indeed Hiring",
+      badgeClass: "bg-amber-600/10 text-amber-600 dark:text-amber-400 border-amber-600/25",
+      dotColor: "bg-amber-600"
+    };
+  }
+  if (primary.includes("YELLOW_PAGE") || primary.includes("YELLOWPAGE")) {
+    return {
+      key: "YELLOW_PAGES",
+      name: "YellowPages",
+      shortName: "YellowPages",
+      badgeClass: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/25",
+      dotColor: "bg-orange-500"
+    };
+  }
+  if (primary.includes("META") || primary.includes("WHATSAPP")) {
+    return {
+      key: "META_WHATSAPP",
+      name: "Meta / WhatsApp",
+      shortName: "WhatsApp & IG",
+      badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25",
+      dotColor: "bg-emerald-500"
+    };
+  }
+  if (primary.includes("CLUTCH")) {
+    return {
+      key: "CLUTCH_B2B",
+      name: "Clutch B2B",
+      shortName: "Clutch",
+      badgeClass: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25",
+      dotColor: "bg-indigo-500"
+    };
+  }
+  if (primary.includes("BBB")) {
+    return {
+      key: "BBB_TRUST",
+      name: "BBB Trust",
+      shortName: "BBB Trust",
+      badgeClass: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25",
+      dotColor: "bg-teal-500"
+    };
+  }
+  if (primary.includes("YELP")) {
+    return {
+      key: "YELP",
+      name: "Yelp Directory",
+      shortName: "Yelp",
+      badgeClass: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/25",
+      dotColor: "bg-red-500"
+    };
+  }
+  if (primary.includes("REPUTATION")) {
+    return {
+      key: "LOW_RATING_REPUTATION",
+      name: "Trustpilot Audit",
+      shortName: "Trustpilot",
+      badgeClass: "bg-rose-600/10 text-rose-600 dark:text-rose-400 border-rose-600/25",
+      dotColor: "bg-rose-600"
+    };
+  }
+  if (primary.includes("NEW_BUSINESS")) {
+    return {
+      key: "NEW_BUSINESS_REGISTRATIONS",
+      name: "New Registrations",
+      shortName: "State Filing",
+      badgeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25",
+      dotColor: "bg-amber-500"
+    };
+  }
+  if (primary.includes("ALL_SOURCES") || (sources && sources.length > 1)) {
+    return {
+      key: "ALL_SOURCES",
+      name: "All Sources",
+      shortName: "Multi-Source",
+      badgeClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25",
+      dotColor: "bg-purple-500"
+    };
+  }
+
+  // Default to Google Maps
+  return {
+    key: "GOOGLE_MAPS",
+    name: "Google Maps",
+    shortName: "Google Maps",
+    badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25",
+    dotColor: "bg-blue-500"
+  };
+}
+

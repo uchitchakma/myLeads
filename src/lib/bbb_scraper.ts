@@ -182,20 +182,14 @@ export async function harvestBBBLeads(
       }
     }
 
-    const slug = cleanBizName.toLowerCase().replace(/[^a-z0-9]/g, "");
     if (!siteUrl) {
-      siteUrl = `https://${slug || "company"}.com`;
+      siteUrl = "";
     }
     if (!contactEmail) {
-      try {
-        const domain = new URL(siteUrl).hostname.replace(/^www\./, "");
-        contactEmail = `office@${domain}`;
-      } catch {
-        contactEmail = `support@${slug}.com`;
-      }
+      contactEmail = "";
     }
     if (!detectedPhone) {
-      detectedPhone = "+1 (800) 555-0199";
+      detectedPhone = cand.phone || "";
     }
 
     const bbbSearchUrl = `https://www.bbb.org/search?find_text=${encodeURIComponent(cleanBizName)}&find_loc=${encodeURIComponent(cleanCity)}`;

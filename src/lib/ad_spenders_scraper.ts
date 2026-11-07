@@ -136,8 +136,8 @@ export async function harvestAdSpendersLeads(
               if (name && !realBusinesses.some(b => b.name.toLowerCase() === name.toLowerCase())) {
                 realBusinesses.push({
                   name,
-                  website: website || `https://www.${name.toLowerCase().replace(/[^a-z0-9]/g, "")}.com`,
-                  phone: phone || "(555) 000-0000",
+                  website: website || "",
+                  phone: phone || "",
                   address: cleanCity,
                   rating: 4.8,
                   reviews: 32

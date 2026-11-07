@@ -60,6 +60,8 @@ export interface Lead {
   speedScore: number;
   mobileFriendly: boolean;
   loadTime: string;
+  websiteStatus?: "ONLINE" | "OFFLINE" | "NO_DNS" | "NO_WEBSITE";
+  websiteHttpStatus?: number;
   detectedIssues: string[];
   aiPitch?: {
     subjects: string[];
@@ -393,8 +395,9 @@ export function createOrUpdateLead(leadData: Omit<Lead, "id" | "normalizedDomain
   const normalized = normalizeDomain(leadData.websiteUrl);
 
   const existingIndex = db.leads.findIndex(l => 
-    l.normalizedDomain === normalized || 
-    (leadData.phoneNumber && l.phoneNumber === leadData.phoneNumber)
+    (Boolean(normalized) && Boolean(l.normalizedDomain) && l.normalizedDomain === normalized) || 
+    (Boolean(leadData.phoneNumber) && Boolean(l.phoneNumber) && l.phoneNumber === leadData.phoneNumber) ||
+    (!normalized && !leadData.phoneNumber && l.businessName.toLowerCase() === leadData.businessName.toLowerCase() && l.city?.toLowerCase() === leadData.city?.toLowerCase())
   );
 
   if (existingIndex !== -1) {
@@ -438,6 +441,8 @@ export function createOrUpdateLead(leadData: Omit<Lead, "id" | "normalizedDomain
       discoverySources: mergedSources,
       speedScore: leadData.speedScore || existing.speedScore,
       loadTime: leadData.loadTime || existing.loadTime,
+      websiteStatus: leadData.websiteStatus || existing.websiteStatus,
+      websiteHttpStatus: leadData.websiteHttpStatus || existing.websiteHttpStatus,
       detectedIssues: leadData.detectedIssues?.length ? leadData.detectedIssues : existing.detectedIssues,
       aiPitch: leadData.aiPitch || existing.aiPitch,
       updatedAt: new Date().toISOString()

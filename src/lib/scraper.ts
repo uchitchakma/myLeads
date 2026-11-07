@@ -145,18 +145,15 @@ async function queryOsmBusinesses(niche: string, city: string, limit: number = 5
           let website = tags.website || tags["contact:website"] || tags.url || "";
           const phone = tags.phone || tags["contact:phone"] || tags["phone:mobile"] || "";
 
-          // If no direct website tag, generate clean real-world domain search target
-          if (!website) {
-            const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]/g, "");
-            website = `https://www.${cleanSlug}.com`;
-          } else if (!website.startsWith("http")) {
+          // Clean website URL if present, do NOT invent fake domains
+          if (website && !website.startsWith("http")) {
             website = "https://" + website;
           }
 
           results.push({
             name,
             website,
-            phone: phone || `+1 (555) ${Math.floor(Math.random() * 800 + 100)}-${Math.floor(Math.random() * 9000 + 1000)}`,
+            phone: phone || "",
             city: tags["addr:city"] || city,
             category: niche
           });
@@ -171,8 +168,8 @@ async function queryOsmBusinesses(niche: string, city: string, limit: number = 5
     }
   }
 
-  // Backup verified real business profiles
-  return getVerifiedCityTargets(niche, city, limit);
+  // If no businesses found in OSM, return empty array without synthesizing fake businesses
+  return [];
 }
 
 /**
@@ -186,6 +183,17 @@ async function inspectLiveWebsite(url: string, businessName: string): Promise<{
   hasViewport: boolean;
   issues: string[];
 }> {
+  if (!url || !url.trim() || !url.startsWith("http")) {
+    return {
+      email: "",
+      phone: "",
+      owner: "Business Principal / Owner",
+      latency: 0,
+      hasViewport: true,
+      issues: ["No active website registered for this physical business"]
+    };
+  }
+
   const startTime = Date.now();
   const domain = url.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
 
@@ -228,7 +236,7 @@ async function inspectLiveWebsite(url: string, businessName: string): Promise<{
     if (!hasViewport) issues.push("Missing responsive mobile viewport tag");
 
     return {
-      email: email || `contact@${domain}`,
+      email: email || "",
       phone: phone || "",
       owner: "Business Principal / Owner",
       latency,
@@ -238,14 +246,14 @@ async function inspectLiveWebsite(url: string, businessName: string): Promise<{
   } catch {
     const latency = (Date.now() - startTime) / 1000;
     return {
-      email: `contact@${domain}`,
+      email: "",
       phone: "",
       owner: "Business Principal / Owner",
       latency: Math.max(2.1, latency),
       hasViewport: true,
       issues: [
-        "Unoptimized mobile assets delaying initial screen render",
-        "Render-blocking scripts slowing down 4G/5G visitor load"
+        "Website server connection failed or timed out",
+        "Render-blocking assets slowing down 4G/5G visitor load"
       ]
     };
   }
@@ -318,7 +326,7 @@ export async function runTechnique1Harvester(niche: string, city: string, count:
     speedScore = Math.max(20, Math.min(88, speedScore));
 
     const loadTime = `${liveInspection.latency.toFixed(1)}s`;
-    const finalPhone = biz.phone || liveInspection.phone || `+1 (555) 019-${Math.floor(Math.random() * 9000 + 1000)}`;
+    const finalPhone = biz.phone || liveInspection.phone || "";
 
     const subjects = [
       `Quick note regarding ${biz.name}'s mobile site speed`,
@@ -326,16 +334,16 @@ export async function runTechnique1Harvester(niche: string, city: string, count:
       `3 mobile performance fixes for ${biz.name}`
     ];
 
-    const body = `Hi ${liveInspection.owner},\n\nI was looking at your website (${biz.website}) and ran a quick mobile performance audit.\n\nYour site currently scores ${speedScore}/100 on mobile devices (taking ~${loadTime} to fully load for local visitors). According to Google's data, sites taking over 3 seconds lose roughly 35-40% of potential customer inquiries.\n\nHere are the top bottlenecks we detected:\n${liveInspection.issues.map(iss => `  • ${iss}`).join("\n")}\n\nI specialize in building ultra-fast, modern web applications that load in under 1.5s to maximize local customer conversions.\n\nWould you be open to a quick 2-minute video showing how we can get your speed to 95+ and double your mobile leads?\n\nBest regards,\nUchit Chakma | UCDREAMS (https://ucdreams.com)`;
+    const body = `Hi ${liveInspection.owner},\n\nI was looking at your website (${biz.website || "online profile"}) and ran a quick mobile performance audit.\n\nYour site currently scores ${speedScore}/100 on mobile devices (taking ~${loadTime} to fully load for local visitors). According to Google's data, sites taking over 3 seconds lose roughly 35-40% of potential customer inquiries.\n\nHere are the top bottlenecks we detected:\n${liveInspection.issues.map(iss => `  • ${iss}`).join("\n")}\n\nI specialize in building ultra-fast, modern web applications that load in under 1.5s to maximize local customer conversions.\n\nWould you be open to a quick 2-minute video showing how we can get your speed to 95+ and double your mobile leads?\n\nBest regards,\nUchit Chakma | UCDREAMS (https://ucdreams.com)`;
 
-    const whatsapp = `Hi! 👋 I noticed ${biz.name}'s website (${biz.website}) loads in ~${loadTime} on mobile (score: ${speedScore}/100). Fixing a couple of script & image bottlenecks can cut load time in half and increase calls. Want a free 2-min video breakdown?`;
+    const whatsapp = `Hi! 👋 I noticed ${biz.name}'s website (${biz.website || "profile"}) loads in ~${loadTime} on mobile (score: ${speedScore}/100). Fixing a couple of script & image bottlenecks can cut load time in half and increase calls. Want a free 2-min video breakdown?`;
 
     const mapSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(biz.name + " " + biz.city)}`;
     const osmSearchUrl = `https://www.openstreetmap.org/search?query=${encodeURIComponent(biz.name + " " + biz.city)}`;
 
     results.push({
       businessName: biz.name,
-      websiteUrl: biz.website,
+      websiteUrl: biz.website || "",
       googleMapsUrl: mapSearchUrl,
       sourceUrl: osmSearchUrl,
       phoneNumber: finalPhone,
@@ -356,29 +364,4 @@ export async function runTechnique1Harvester(niche: string, city: string, count:
   }
 
   return results;
-}
-
-/**
- * Backup Verified Local Database
- */
-function getVerifiedCityTargets(niche: string, city: string, limit: number) {
-  const cityClean = city.split(",")[0].trim();
-  const templates = [
-    `${cityClean} Premier ${niche}`,
-    `${cityClean} Central ${niche} Group`,
-    `Elite ${niche} of ${cityClean}`,
-    `${cityClean} Metro ${niche} Specialists`,
-    `Apex ${niche} Center`
-  ];
-
-  return templates.slice(0, limit).map((name, i) => {
-    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, "");
-    return {
-      name,
-      website: `https://www.${slug}.com`,
-      phone: `+1 (${Math.floor(Math.random() * 800 + 200)}) 555-${Math.floor(Math.random() * 9000 + 1000)}`,
-      city,
-      category: niche
-    };
-  });
 }

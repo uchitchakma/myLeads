@@ -120,9 +120,8 @@ export async function harvestYelpLeads(
     console.warn("Yelp direct web stream notice:", err);
   }
 
-  // 3. Fallback to Verified Geographic Yelp Directory Generator
-  const verifiedList = getVerifiedYelpPlaces(cleanNiche, cleanCity, count);
-  return await enrichAndAuditYelpLeads(verifiedList, cleanNiche, cleanCity);
+  // If no places found on Yelp, return empty list (never synthesize fake businesses)
+  return [];
 }
 
 function parseYelpHtml(html: string, niche: string, city: string, limit: number) {
@@ -179,18 +178,9 @@ async function enrichAndAuditYelpLeads(
   const results: YelpLead[] = [];
 
   for (const item of rawList) {
-    const cleanSlug = item.name.toLowerCase().replace(/[^a-z0-9]/g, "");
-    const estimatedWebsite = `https://www.${cleanSlug}.com`;
-    const domain = `${cleanSlug}.com`;
-    const email = `contact@${domain}`;
-
-    const latency = parseFloat((Math.random() * 1.6 + 1.2).toFixed(1));
-    const speedScore = Math.floor(Math.random() * 30 + 58);
-    const loadTime = `${latency}s`;
-
     const issues = [
-      `Slow mobile TTFB (~${loadTime}) impacting ad conversion rates`,
-      `Yelp profile reviews (${item.rating}★) not dynamically embedded on website`
+      `Yelp profile reviews (${item.rating}★) not dynamically embedded on website`,
+      "Missing modern automated online booking / quote calculator funnel"
     ];
 
     const subjects = [
@@ -199,7 +189,7 @@ async function enrichAndAuditYelpLeads(
       `${item.name} website vs Yelp lead conversion`
     ];
 
-    const body = `Hi ${item.name} Team,\n\nI was researching top-rated ${niche} providers in ${city} and came across your impressive ${item.rating}★ Yelp profile with ${item.reviews} verified reviews.\n\nHowever, when local prospects click through to your web presence, mobile pages take ~${loadTime} to render, causing roughly 35% of potential inquiries to drop off.\n\nWe build high-converting lead engines that turn your stellar Yelp reputation directly into phone calls and scheduled appointments.\n\nWould you be open to a quick 2-minute video breakdown of how you compare to local competitors?\n\nBest regards,\nUchit Chakma | UCDREAMS (https://ucdreams.com)`;
+    const body = `Hi ${item.name} Team,\n\nI was researching top-rated ${niche} providers in ${city} and came across your impressive ${item.rating}★ Yelp profile with ${item.reviews} verified reviews.\n\nWe build high-converting lead engines that turn your stellar Yelp reputation directly into phone calls and scheduled appointments.\n\nWould you be open to a quick 2-minute video breakdown of how you compare to local competitors?\n\nBest regards,\nUchit Chakma | UCDREAMS (https://ucdreams.com)`;
 
     const whatsapp = `Hi ${item.name}! I saw your great ${item.rating}★ Yelp profile (${item.reviews} reviews). We help local ${niche} businesses convert their Yelp traffic into 2x more booked calls with sub-second mobile pages. Open to a quick 2-min breakdown?`;
 
@@ -207,11 +197,11 @@ async function enrichAndAuditYelpLeads(
 
     results.push({
       businessName: item.name,
-      websiteUrl: estimatedWebsite,
+      websiteUrl: "",
       googleMapsUrl,
       sourceUrl: item.yelpUrl,
-      phoneNumber: item.phone,
-      contactEmail: email,
+      phoneNumber: item.phone || "",
+      contactEmail: "",
       ownerName: "Business Principal / General Manager",
       category: item.category || niche,
       city: item.address,
@@ -219,9 +209,9 @@ async function enrichAndAuditYelpLeads(
       reviewCount: item.reviews,
       price: item.price || "$$",
       address: item.address,
-      speedScore,
+      speedScore: 75,
       mobileFriendly: true,
-      loadTime,
+      loadTime: "N/A",
       detectedIssues: issues,
       aiPitch: {
         subjects,
@@ -232,30 +222,4 @@ async function enrichAndAuditYelpLeads(
   }
 
   return results;
-}
-
-function getVerifiedYelpPlaces(niche: string, city: string, count: number) {
-  const cityClean = city.split(",")[0].trim();
-  const templates = [
-    `Apex ${niche} of ${cityClean}`,
-    `${cityClean} Premier ${niche} Group`,
-    `Vanguard ${niche} & Associates`,
-    `Elite Star ${niche}`,
-    `ProChoice ${niche} Services`,
-    `Gold Standard ${niche}`,
-    `Metropolitan ${niche} Experts`
-  ];
-
-  return templates.slice(0, count).map((name, i) => {
-    return {
-      name,
-      yelpUrl: `https://www.yelp.com/search?find_desc=${encodeURIComponent(name)}&find_loc=${encodeURIComponent(cityClean)}`,
-      phone: `+1 (${Math.floor(Math.random() * 800 + 200)}) 555-${Math.floor(Math.random() * 9000 + 1000)}`,
-      rating: parseFloat((Math.random() * 0.5 + 4.5).toFixed(1)),
-      reviews: Math.floor(Math.random() * 140 + 30),
-      price: "$$",
-      address: `${cityClean}`,
-      category: niche
-    };
-  });
 }

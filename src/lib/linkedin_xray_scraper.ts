@@ -182,20 +182,15 @@ export async function harvestLinkedInLeads(
       }
     }
 
-    const slug = cleanBizName.toLowerCase().replace(/[^a-z0-9]/g, "");
+    // Keep clean empty strings if no real web/email/phone found - never fabricate fake domains
     if (!siteUrl) {
-      siteUrl = `https://${slug || "business"}.com`;
+      siteUrl = "";
     }
     if (!contactEmail) {
-      try {
-        const domain = new URL(siteUrl).hostname.replace(/^www\./, "");
-        contactEmail = `founder@${domain}`;
-      } catch {
-        contactEmail = `hello@${slug}.com`;
-      }
+      contactEmail = "";
     }
     if (!detectedPhone) {
-      detectedPhone = "+1 (800) 555-0199";
+      detectedPhone = cand.phone || "";
     }
 
     const linkedInSearchUrl = `https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(cleanBizName + " " + cleanCity)}`;

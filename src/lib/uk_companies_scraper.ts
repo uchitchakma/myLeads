@@ -410,10 +410,10 @@ export async function harvestUkCompaniesLeads(
       phoneNumber = getUkPhoneFallback(cleanCity);
     }
     if (!contactEmail) {
-      contactEmail = `director@${cleanSlug || "business"}.co.uk`;
+      contactEmail = "";
     }
     if (!websiteUrl) {
-      websiteUrl = `https://${cleanSlug || "company"}.co.uk`;
+      websiteUrl = "";
       speedScore = 42;
       loadTime = "N/A";
       mobileFriendly = false;

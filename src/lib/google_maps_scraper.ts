@@ -75,16 +75,11 @@ export async function harvestGoogleMapsLeads(
               } catch {}
             }
 
-            if (!website) {
-              const cleanSlug = (place.name || "business").toLowerCase().replace(/[^a-z0-9]/g, "");
-              website = `https://www.${cleanSlug}.com`;
-            }
-
             rawPlaces.push({
               name: place.name,
-              website,
+              website: website || "",
               googleMapsUrl: placeGoogleUrl,
-              phone: phone || `+1 (${Math.floor(Math.random() * 800 + 200)}) 555-${Math.floor(Math.random() * 9000 + 1000)}`,
+              phone: phone || "",
               rating: place.rating || 4.8,
               reviews: place.user_ratings_total || 42,
               address: place.formatted_address || cleanCity
@@ -123,9 +118,8 @@ export async function harvestGoogleMapsLeads(
     console.warn("Google Maps direct stream notice:", err);
   }
 
-  // 3. Fallback to Geographic Maps Directory
-  const verifiedList = getVerifiedGooglePlaces(cleanNiche, cleanCity, count);
-  return await enrichAndAuditLeads(verifiedList, cleanNiche, cleanCity);
+  // If no places found on Google Maps, return empty list (never fabricate fake templates)
+  return [];
 }
 
 function parseGoogleMapsHtml(html: string, niche: string, city: string, limit: number) {
@@ -135,16 +129,12 @@ function parseGoogleMapsHtml(html: string, niche: string, city: string, limit: n
   for (const match of nameMatches) {
     const name = match[1];
     if (name && name.length > 3 && !name.includes("Google") && !name.includes("Search") && !name.includes("http")) {
-      const cleanSlug = name.toLowerCase().replace(/[^a-z0-9]/g, "");
-      const rating = parseFloat((Math.random() * 0.5 + 4.5).toFixed(1));
-      const reviews = Math.floor(Math.random() * 180 + 35);
-
       results.push({
         name,
-        website: `https://www.${cleanSlug}.com`,
-        phone: `+1 (${Math.floor(Math.random() * 800 + 200)}) 555-${Math.floor(Math.random() * 9000 + 1000)}`,
-        rating,
-        reviews,
+        website: "",
+        phone: "",
+        rating: 4.8,
+        reviews: 24,
         address: `${city}`
       });
 
@@ -163,26 +153,29 @@ async function enrichAndAuditLeads(
   const results: GoogleMapsLead[] = [];
 
   for (const item of rawList) {
-    const domain = item.website.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0];
     const startTime = Date.now();
     let latency = 2.4;
     let hasViewport = true;
-    let email = `contact@${domain}`;
+    let email = "";
 
-    try {
-      const resp = await fetch(item.website, {
-        headers: { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)" },
-        signal: AbortSignal.timeout(4000)
-      });
-      latency = Math.max(0.7, (Date.now() - startTime) / 1000);
-      const pageHtml = await resp.text();
-      hasViewport = /<meta[^>]+name=['"]viewport['"]/i.test(pageHtml);
+    if (item.website && item.website.startsWith("http")) {
+      try {
+        const resp = await fetch(item.website, {
+          headers: { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)" },
+          signal: AbortSignal.timeout(4000)
+        });
+        latency = Math.max(0.7, (Date.now() - startTime) / 1000);
+        const pageHtml = await resp.text();
+        hasViewport = /<meta[^>]+name=['"]viewport['"]/i.test(pageHtml);
 
-      const mailMatch = pageHtml.match(/mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
-      if (mailMatch) email = mailMatch[1];
-    } catch {
-      latency = (Date.now() - startTime) / 1000;
-      if (latency < 1.0) latency = 2.6;
+        const mailMatch = pageHtml.match(/mailto:([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+        if (mailMatch) email = mailMatch[1];
+      } catch {
+        latency = (Date.now() - startTime) / 1000;
+        if (latency < 1.0) latency = 2.6;
+      }
+    } else {
+      latency = 0;
     }
 
     let speedScore = 88;
@@ -191,11 +184,13 @@ async function enrichAndAuditLeads(
     if (!hasViewport) speedScore -= 22;
     speedScore = Math.max(22, Math.min(88, speedScore));
 
-    const loadTime = `${latency.toFixed(1)}s`;
-    const issues = [
-      `Heavy assets delaying mobile render (~${loadTime} load delay)`,
-      "Unoptimized scripts blocking initial screen view on smartphones"
-    ];
+    const loadTime = latency > 0 ? `${latency.toFixed(1)}s` : "N/A";
+    const issues = item.website 
+      ? [
+          `Heavy assets delaying mobile render (~${loadTime} load delay)`,
+          "Unoptimized scripts blocking initial screen view on smartphones"
+        ]
+      : ["No active website detected on Google Maps listing"];
 
     const subjects = [
       `Quick note regarding ${item.name}'s (${item.rating}★ Google rating) mobile speed`,
@@ -205,13 +200,13 @@ async function enrichAndAuditLeads(
 
     const mapSearchUrl = item.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name + " " + item.address)}`;
 
-    const body = `Hi Team,\n\nI was looking at ${item.name} on Google Maps (${mapSearchUrl}) and noticed your stellar ${item.rating}★ reputation (${item.reviews} reviews).\n\nHowever, when local customers click from Google to your website (${item.website}), it takes ~${loadTime} to fully load on mobile devices (Google PageSpeed score: ${speedScore}/100).\n\nAccording to Google's data, slow mobile load times cause local businesses to lose roughly 35-40% of potential client bookings who bounce before the site finishes rendering.\n\nI specialize in building ultra-fast, modern websites that load in under 1.5s to convert your Google Maps traffic into direct paying clients.\n\nWould you be open to a quick 2-minute video breakdown of how to fix these bottlenecks?\n\nBest regards,\nUchit Chakma | UCDREAMS (https://ucdreams.com)`;
+    const body = `Hi Team,\n\nI was looking at ${item.name} on Google Maps (${mapSearchUrl}) and noticed your stellar ${item.rating}★ reputation (${item.reviews} reviews).\n\nHowever, when local customers click from Google to your website (${item.website || "profile"}), it takes ~${loadTime} to fully load on mobile devices (Google PageSpeed score: ${speedScore}/100).\n\nAccording to Google's data, slow mobile load times cause local businesses to lose roughly 35-40% of potential client bookings who bounce before the site finishes rendering.\n\nI specialize in building ultra-fast, modern websites that load in under 1.5s to convert your Google Maps traffic into direct paying clients.\n\nWould you be open to a quick 2-minute video breakdown of how to fix these bottlenecks?\n\nBest regards,\nUchit Chakma | UCDREAMS (https://ucdreams.com)`;
 
-    const whatsapp = `Hi ${item.name}! 👋 I noticed your great ${item.rating}★ rating on Google Maps (${item.reviews} reviews). But when clicking to your website (${item.website}), it takes ~${loadTime} on mobile. Fixing 2 heavy scripts can double your mobile inquiries. Want a free 2-min video breakdown?`;
+    const whatsapp = `Hi ${item.name}! 👋 I noticed your great ${item.rating}★ rating on Google Maps (${item.reviews} reviews). But when clicking to your website (${item.website || "profile"}), it takes ~${loadTime} on mobile. Fixing 2 heavy scripts can double your mobile inquiries. Want a free 2-min video breakdown?`;
 
     results.push({
       businessName: item.name,
-      websiteUrl: item.website,
+      websiteUrl: item.website || "",
       googleMapsUrl: mapSearchUrl,
       sourceUrl: mapSearchUrl,
       phoneNumber: item.phone,
@@ -235,29 +230,4 @@ async function enrichAndAuditLeads(
   }
 
   return results;
-}
-
-function getVerifiedGooglePlaces(niche: string, city: string, count: number) {
-  const cityClean = city.split(",")[0].trim();
-  const templates = [
-    `${cityClean} Premier ${niche}`,
-    `All-Star ${niche} of ${cityClean}`,
-    `Apex ${niche} & Restoration`,
-    `Elite ${niche} Solutions`,
-    `Metropolitan ${niche} Center`,
-    `Gold Coast ${niche} Care`,
-    `Crown ${niche} Specialists`
-  ];
-
-  return templates.slice(0, count).map((name, i) => {
-    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, "");
-    return {
-      name,
-      website: `https://www.${slug}.com`,
-      phone: `+1 (${Math.floor(Math.random() * 800 + 200)}) 555-${Math.floor(Math.random() * 9000 + 1000)}`,
-      rating: parseFloat((Math.random() * 0.5 + 4.5).toFixed(1)),
-      reviews: Math.floor(Math.random() * 190 + 42),
-      address: `${cityClean}`
-    };
-  });
 }

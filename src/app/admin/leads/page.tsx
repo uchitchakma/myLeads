@@ -43,7 +43,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import Link from "next/link";
-import { getVerifiedChannelUrl, getWhatsAppClickUrl } from "@/lib/url_validator";
+import { getVerifiedChannelUrl, getWhatsAppClickUrl, getHarvestMethodInfo } from "@/lib/url_validator";
 
 export default function MasterLeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -58,6 +58,7 @@ export default function MasterLeadsPage() {
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [campaignFilter, setCampaignFilter] = useState("ALL");
   const [userFilter, setUserFilter] = useState("ALL");
+  const [methodFilter, setMethodFilter] = useState("ALL");
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -351,8 +352,11 @@ export default function MasterLeadsPage() {
     const matchesCategory = categoryFilter === "ALL" || lead.category === categoryFilter;
     const matchesCampaign = campaignFilter === "ALL" || (campaignFilter === "UNASSIGNED" ? !lead.campaign : lead.campaign === campaignFilter);
     const matchesUser = userFilter === "ALL" || lead.userEmail?.toLowerCase() === userFilter.toLowerCase();
+    const matchesMethod = methodFilter === "ALL" || 
+      lead.sourceTechnique === methodFilter || 
+      (lead.discoverySources && lead.discoverySources.includes(methodFilter));
 
-    return matchesSearch && matchesStatus && matchesCategory && matchesCampaign && matchesUser;
+    return matchesSearch && matchesStatus && matchesCategory && matchesCampaign && matchesUser && matchesMethod;
   });
 
   // Pagination Calculations
@@ -394,7 +398,7 @@ export default function MasterLeadsPage() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, categoryFilter, campaignFilter, userFilter, pageSize]);
+  }, [search, statusFilter, categoryFilter, campaignFilter, userFilter, methodFilter, pageSize]);
 
   return (
     <div className="flex min-h-screen bg-[var(--bg-main)] transition-colors">
@@ -546,6 +550,30 @@ export default function MasterLeadsPage() {
                   <option key={c.id || c.name} value={c.name}>{c.name}</option>
                 ))}
               </select>
+
+              <select
+                value={methodFilter}
+                onChange={e => setMethodFilter(e.target.value)}
+                className="px-3 py-2 rounded-xl bg-[var(--bg-main)] border border-[var(--border-subtle)] text-xs text-[var(--text-main)] focus:outline-none focus:border-[#C5453E]"
+              >
+                <option value="ALL">All Harvest Methods</option>
+                <option value="GOOGLE_MAPS">Google Maps</option>
+                <option value="OPEN_STREET_MAP">OpenStreetMap</option>
+                <option value="SEC_EDGAR_FUNDED">SEC EDGAR (US Gov)</option>
+                <option value="UK_COMPANIES_HOUSE">UK Companies House</option>
+                <option value="LINKEDIN_XRAY">LinkedIn X-Ray</option>
+                <option value="SHOPIFY_ECOMMERCE">Shopify DTC</option>
+                <option value="HIGH_TICKET_CONTRACTORS">Contractors (Houzz)</option>
+                <option value="AD_SPENDERS">Paid Ad Spenders</option>
+                <option value="HIRING_SIGNALS">Hiring Signals</option>
+                <option value="YELLOW_PAGES">YellowPages</option>
+                <option value="META_WHATSAPP">Meta / WhatsApp</option>
+                <option value="CLUTCH_B2B">Clutch B2B</option>
+                <option value="BBB_TRUST">BBB Trust</option>
+                <option value="YELP">Yelp Directory</option>
+                <option value="LOW_RATING_REPUTATION">Trustpilot Audit</option>
+                <option value="NEW_BUSINESS_REGISTRATIONS">New Registrations</option>
+              </select>
             </div>
           </div>
 
@@ -615,8 +643,9 @@ export default function MasterLeadsPage() {
                   <th className="py-3.5 px-4 min-w-[200px]">Business &amp; Rating</th>
                   <th className="py-3.5 px-4 min-w-[160px] whitespace-nowrap">Category</th>
                   <th className="py-3.5 px-4 min-w-[160px] whitespace-nowrap">Harvested By</th>
-                  <th className="py-3.5 px-4 min-w-[160px] whitespace-nowrap">Source &amp; Profile Link</th>
-                  <th className="py-3.5 px-4 min-w-[150px] whitespace-nowrap">Website</th>
+                  <th className="py-3.5 px-4 min-w-[160px] whitespace-nowrap">Harvest Method</th>
+                  <th className="py-3.5 px-4 min-w-[150px] whitespace-nowrap">Source Profile</th>
+                  <th className="py-3.5 px-4 min-w-[170px] whitespace-nowrap">Website &amp; Health</th>
                   <th className="py-3.5 px-4 min-w-[210px]">Owner &amp; Contacts</th>
                   <th className="py-3.5 px-4 min-w-[170px] whitespace-nowrap">WhatsApp</th>
                   <th className="py-3.5 px-4 min-w-[130px] whitespace-nowrap">City</th>
@@ -630,14 +659,14 @@ export default function MasterLeadsPage() {
               <tbody className="divide-y divide-[var(--border-subtle)] text-xs text-[var(--text-main)]">
                 {loading ? (
                   <tr>
-                    <td colSpan={13} className="py-16 text-center text-[var(--text-muted)]">
+                    <td colSpan={14} className="py-16 text-center text-[var(--text-muted)]">
                       <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
                       Loading global database records...
                     </td>
                   </tr>
                 ) : filteredLeads.length === 0 ? (
                   <tr>
-                    <td colSpan={13} className="py-16 text-center text-[var(--text-muted)]">
+                    <td colSpan={14} className="py-16 text-center text-[var(--text-muted)]">
                       <Search className="w-8 h-8 mx-auto mb-2 text-[var(--text-dim)] opacity-50" />
                       No leads match your search criteria.
                     </td>
@@ -661,6 +690,7 @@ export default function MasterLeadsPage() {
                     const isOsm = lead.sourceTechnique === "OPEN_STREET_MAP" || (lead.discoverySources && lead.discoverySources.includes("OPEN_STREET_MAP") && !lead.discoverySources.includes("GOOGLE_MAPS") && !lead.discoverySources.includes("YELP") && !lead.discoverySources.includes("LINKEDIN_XRAY"));
                     const isYelp = lead.sourceTechnique === "YELP" || (lead.discoverySources && lead.discoverySources.includes("YELP") && !lead.discoverySources.includes("GOOGLE_MAPS"));
                     const isMerged = lead.sourceTechnique === "ALL_SOURCES" || (lead.discoverySources && lead.discoverySources.length > 1);
+                    const methodMeta = getHarvestMethodInfo(lead.sourceTechnique, lead.discoverySources);
 
                     return (
                       <tr
@@ -720,6 +750,14 @@ export default function MasterLeadsPage() {
                               {lead.userEmail || "Unknown"}
                             </span>
                           </div>
+                        </td>
+
+                        {/* Dedicated Harvest Method Column */}
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold shadow-xs whitespace-nowrap ${methodMeta.badgeClass}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${methodMeta.dotColor}`} />
+                            <span>{methodMeta.name}</span>
+                          </span>
                         </td>
 
                         {/* Discovery Source & Profile Link */}
@@ -943,20 +981,50 @@ export default function MasterLeadsPage() {
                           )}
                         </td>
 
-                        {/* Website */}
+                        {/* Dedicated Website Column with Live Verification Badge */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
                           {lead.websiteUrl ? (
-                            <a
-                              href={lead.websiteUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-xs text-[var(--text-muted)] hover:text-[#C5453E] hover:underline flex items-center gap-1"
-                            >
-                              <Globe className="w-3.5 h-3.5 text-[var(--text-dim)] shrink-0" />
-                              <span className="max-w-[130px] truncate">{lead.websiteUrl.replace(/^https?:\/\/(www\.)?/, "")}</span>
-                            </a>
+                            <div className="flex flex-col gap-1 items-start">
+                              <a
+                                href={lead.websiteUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-xs text-[#C5453E] hover:underline whitespace-nowrap transition-colors max-w-[170px] truncate"
+                                title={lead.websiteUrl}
+                              >
+                                <Globe className="w-3.5 h-3.5 flex-shrink-0 text-[#C5453E]/80" />
+                                <span className="truncate">{lead.normalizedDomain || lead.websiteUrl.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0]}</span>
+                                <ExternalLink className="w-2.5 h-2.5 flex-shrink-0 opacity-70" />
+                              </a>
+                              {lead.websiteStatus === "ONLINE" ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  <span>Live • Active</span>
+                                </span>
+                              ) : lead.websiteStatus === "OFFLINE" ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                  <span>Offline / Down</span>
+                                </span>
+                              ) : lead.websiteStatus === "NO_DNS" ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                  <span>No DNS • Dead</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  <span>Verified URL</span>
+                                </span>
+                              )}
+                            </div>
                           ) : (
-                            <span className="text-[var(--text-dim)]">N/A</span>
+                            <div className="flex flex-col gap-0.5 items-start">
+                              <span className="text-[11px] text-[var(--text-dim)] italic px-1">No Website</span>
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-500/10 text-slate-500 border border-slate-500/20">
+                                Unregistered
+                              </span>
+                            </div>
                           )}
                         </td>
 

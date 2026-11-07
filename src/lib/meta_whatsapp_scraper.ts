@@ -183,20 +183,14 @@ export async function harvestMetaWhatsAppLeads(
       }
     }
 
-    const slug = cleanBizName.toLowerCase().replace(/[^a-z0-9]/g, "");
     if (!siteUrl) {
-      siteUrl = `https://${slug || "business"}.com`;
+      siteUrl = "";
     }
     if (!contactEmail) {
-      try {
-        const domain = new URL(siteUrl).hostname.replace(/^www\./, "");
-        contactEmail = `info@${domain}`;
-      } catch {
-        contactEmail = `hello@${slug}.com`;
-      }
+      contactEmail = "";
     }
     if (!detectedPhone) {
-      detectedPhone = "+1 (800) 555-0199";
+      detectedPhone = cand.phone || "";
     }
 
     // Build real WhatsApp click-to-chat URL using phone digits
@@ -204,7 +198,8 @@ export async function harvestMetaWhatsAppLeads(
     const whatsAppNumber = cleanDigits.length === 10 ? `1${cleanDigits}` : cleanDigits;
     const whatsAppUrl = `https://wa.me/${whatsAppNumber}?text=${encodeURIComponent(`Hi ${cleanBizName} team! I came across your business in ${cleanCity} and wanted to share a quick inquiry.`)}`;
 
-    const socialHandle = `@${slug}`;
+    const cleanSlug = cleanBizName.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const socialHandle = cleanSlug ? `@${cleanSlug}` : "";
     const sourceUrl = `https://www.google.com/search?q=${encodeURIComponent("site:instagram.com " + cleanBizName + " " + cleanCity)}`;
 
     leads.push({

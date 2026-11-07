@@ -34,7 +34,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import Link from "next/link";
-import { getVerifiedChannelUrl, getWhatsAppClickUrl } from "@/lib/url_validator";
+import { getVerifiedChannelUrl, getWhatsAppClickUrl, getHarvestMethodInfo } from "@/lib/url_validator";
 
 export default function ScraperPage() {
   const [selectedSources, setSelectedSources] = useState<string[]>([
@@ -1141,8 +1141,9 @@ export default function ScraperPage() {
                     <tr>
                       <th className="px-4 py-3.5 min-w-[200px]">Business &amp; Decision Maker</th>
                       <th className="px-4 py-3.5 min-w-[160px] whitespace-nowrap">Category</th>
-                      <th className="px-4 py-3.5 min-w-[170px] whitespace-nowrap">Source &amp; Profile Link</th>
-                      <th className="px-4 py-3.5 min-w-[150px] whitespace-nowrap">Website</th>
+                      <th className="px-4 py-3.5 min-w-[160px] whitespace-nowrap">Harvest Method</th>
+                      <th className="px-4 py-3.5 min-w-[150px] whitespace-nowrap">Source Profile</th>
+                      <th className="px-4 py-3.5 min-w-[170px] whitespace-nowrap">Website &amp; Health</th>
                       <th className="px-4 py-3.5 min-w-[200px]">Contact Details</th>
                       <th className="px-4 py-3.5 min-w-[170px] whitespace-nowrap">WhatsApp</th>
                       <th className="px-4 py-3.5 min-w-[130px] whitespace-nowrap">Location</th>
@@ -1168,6 +1169,7 @@ export default function ScraperPage() {
                       const isOsm = lead.sourceTechnique === "OPEN_STREET_MAP" || (lead.discoverySources && lead.discoverySources.includes("OPEN_STREET_MAP") && !lead.discoverySources.includes("GOOGLE_MAPS") && !lead.discoverySources.includes("YELP") && !lead.discoverySources.includes("LINKEDIN_XRAY"));
                       const isYelp = lead.sourceTechnique === "YELP" || (lead.discoverySources && lead.discoverySources.includes("YELP") && !lead.discoverySources.includes("GOOGLE_MAPS"));
                       const isMerged = lead.sourceTechnique === "ALL_SOURCES" || (lead.discoverySources && lead.discoverySources.length > 1);
+                      const methodMeta = getHarvestMethodInfo(lead.sourceTechnique, lead.discoverySources);
 
                       return (
                         <tr key={lead.id || idx} className="hover:bg-[var(--bg-card-hover)] transition">
@@ -1215,6 +1217,14 @@ export default function ScraperPage() {
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-main)] border border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-main)] whitespace-nowrap shadow-xs">
                               <Building2 className="w-3.5 h-3.5 text-[#C5453E]/80 shrink-0" />
                               <span>{lead.category || "General B2B"}</span>
+                            </span>
+                          </td>
+
+                          {/* Dedicated Harvest Method Column */}
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold shadow-xs whitespace-nowrap ${methodMeta.badgeClass}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${methodMeta.dotColor}`} />
+                              <span>{methodMeta.name}</span>
                             </span>
                           </td>
 
@@ -1439,23 +1449,50 @@ export default function ScraperPage() {
                             )}
                           </td>
 
-                          {/* Website Column */}
+                          {/* Dedicated Website Column with Live Verification Badge */}
                           <td className="px-4 py-4 whitespace-nowrap">
                             {lead.websiteUrl ? (
-                              <a
-                                href={lead.websiteUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 text-xs text-[var(--text-main)] hover:text-[#C5453E] font-medium transition max-w-[160px] truncate"
-                              >
-                                <Globe className="w-3.5 h-3.5 text-[#C5453E]/80 shrink-0" />
-                                <span className="truncate">{lead.websiteUrl.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0]}</span>
-                                <ExternalLink className="w-2.5 h-2.5 opacity-60 shrink-0" />
-                              </a>
+                              <div className="flex flex-col gap-1 items-start">
+                                <a
+                                  href={lead.websiteUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-main)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-xs text-[#C5453E] hover:underline whitespace-nowrap transition-colors max-w-[170px] truncate"
+                                  title={lead.websiteUrl}
+                                >
+                                  <Globe className="w-3.5 h-3.5 flex-shrink-0 text-[#C5453E]/80" />
+                                  <span className="truncate">{lead.websiteUrl.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0]}</span>
+                                  <ExternalLink className="w-2.5 h-2.5 flex-shrink-0 opacity-70" />
+                                </a>
+                                {lead.websiteStatus === "ONLINE" ? (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span>Live • Active</span>
+                                  </span>
+                                ) : lead.websiteStatus === "OFFLINE" ? (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                    <span>Offline / Down</span>
+                                  </span>
+                                ) : lead.websiteStatus === "NO_DNS" ? (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                    <span>No DNS • Dead</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    <span>Verified URL</span>
+                                  </span>
+                                )}
+                              </div>
                             ) : (
-                              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
-                                No Website
-                              </span>
+                              <div className="flex flex-col gap-0.5 items-start">
+                                <span className="text-[11px] text-[var(--text-dim)] italic px-1">No Website</span>
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-500/10 text-slate-500 border border-slate-500/20">
+                                  Unregistered
+                                </span>
+                              </div>
                             )}
                           </td>
 

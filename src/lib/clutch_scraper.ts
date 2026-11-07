@@ -187,20 +187,15 @@ export async function harvestClutchLeads(
       }
     }
 
-    const slug = cleanBizName.toLowerCase().replace(/[^a-z0-9]/g, "");
+    // Clean real data only - no fake synthetic domains
     if (!siteUrl) {
-      siteUrl = `https://${slug || "agency"}.com`;
+      siteUrl = "";
     }
     if (!contactEmail) {
-      try {
-        const domain = new URL(siteUrl).hostname.replace(/^www\./, "");
-        contactEmail = `hello@${domain}`;
-      } catch {
-        contactEmail = `info@${slug}.com`;
-      }
+      contactEmail = "";
     }
     if (!detectedPhone) {
-      detectedPhone = "+1 (800) 555-0199";
+      detectedPhone = cand.phone || "";
     }
 
     const clutchSearchUrl = `https://clutch.co/search?query=${encodeURIComponent(cleanBizName)}`;

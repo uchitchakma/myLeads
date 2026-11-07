@@ -133,8 +133,8 @@ export async function harvestShopifyLeads(
               if (name && !candidates.some(c => c.name.toLowerCase() === name.toLowerCase())) {
                 candidates.push({
                   name,
-                  website: website || `https://www.${name.toLowerCase().replace(/[^a-z0-9]/g, "")}.com`,
-                  phone: phone || "(555) 000-0000",
+                  website: website || "",
+                  phone: phone || "",
                   address: cleanCity,
                   rating: 4.9,
                   reviews: 38
@@ -150,28 +150,9 @@ export async function harvestShopifyLeads(
     }
   }
 
-  // 3. Realistic DTC Fallback if no network response
+  // If no candidates found, return empty array without synthesizing fake businesses
   if (candidates.length === 0) {
-    const cityName = cleanCity.split(",")[0].trim();
-    const cleanSlug = cleanNiche.toLowerCase().replace(/[^a-z0-9]/g, "");
-    candidates.push(
-      {
-        name: `${cityName} Artisanal ${cleanNiche}`,
-        website: `https://www.${cityName.toLowerCase()}${cleanSlug}.com`,
-        phone: `+1 (212) 555-${Math.floor(Math.random() * 9000 + 1000)}`,
-        address: cleanCity,
-        rating: 4.9,
-        reviews: 64
-      },
-      {
-        name: `Studio ${cleanNiche} of ${cityName}`,
-        website: `https://www.studio${cleanSlug}${cityName.toLowerCase()}.com`,
-        phone: `+1 (212) 555-${Math.floor(Math.random() * 9000 + 1000)}`,
-        address: cleanCity,
-        rating: 4.8,
-        reviews: 52
-      }
-    );
+    return [];
   }
 
   // 4. Audit storefronts for Shopify footprint, live products, real emails, and speed

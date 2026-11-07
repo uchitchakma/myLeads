@@ -182,20 +182,14 @@ export async function harvestHiringLeads(
       }
     }
 
-    const slug = cleanBizName.toLowerCase().replace(/[^a-z0-9]/g, "");
     if (!siteUrl) {
-      siteUrl = `https://${slug || "business"}.com`;
+      siteUrl = "";
     }
     if (!contactEmail) {
-      try {
-        const domain = new URL(siteUrl).hostname.replace(/^www\./, "");
-        contactEmail = `careers@${domain}`;
-      } catch {
-        contactEmail = `jobs@${slug}.com`;
-      }
+      contactEmail = "";
     }
     if (!detectedPhone) {
-      detectedPhone = "+1 (800) 555-0199";
+      detectedPhone = cand.phone || "";
     }
 
     const indeedSearchUrl = `https://www.indeed.com/jobs?q=${encodeURIComponent(cleanBizName)}&l=${encodeURIComponent(cleanCity)}`;

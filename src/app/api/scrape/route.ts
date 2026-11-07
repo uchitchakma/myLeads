@@ -17,6 +17,7 @@ import { harvestNewBusinessLeads } from "@/lib/new_business_scraper";
 import { harvestUkCompaniesLeads } from "@/lib/uk_companies_scraper";
 import { harvestSecEdgarLeads } from "@/lib/sec_edgar_scraper";
 import { auditDomainDeliverability } from "@/lib/dns_deliverability";
+import { verifyWebsiteLive } from "@/lib/website_verifier";
 import { createOrUpdateLead, findUserById, getSystemSettings } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
@@ -180,28 +181,61 @@ export async function POST(req: NextRequest) {
     let duplicateCount = 0;
 
     for (const item of allScrapedItems) {
-      // Run quick native DNS deliverability inspection
+      let finalWebsiteUrl = item.websiteUrl ? item.websiteUrl.trim() : "";
+      let finalContactEmail = item.contactEmail ? item.contactEmail.trim() : "";
       let detectedIssues = Array.isArray(item.detectedIssues) ? [...item.detectedIssues] : [];
-      if (item.websiteUrl) {
+      let websiteStatus: "ONLINE" | "OFFLINE" | "NO_DNS" | "NO_WEBSITE" = "NO_WEBSITE";
+      let websiteHttpStatus: number | undefined = undefined;
+
+      // Real-time Live Domain & Website Verification
+      if (finalWebsiteUrl) {
         try {
-          const deliverability = await auditDomainDeliverability(item.websiteUrl);
-          if (deliverability.isVulnerable) {
-            detectedIssues.push(`Domain missing SPF/DMARC records (Client emails landing in spam)`);
+          const verification = await verifyWebsiteLive(finalWebsiteUrl);
+          websiteStatus = verification.status;
+          websiteHttpStatus = verification.httpStatus;
+
+          if (verification.status === "NO_DNS") {
+            // Unregistered or dead DNS domain (e.g. fake / hallucinated / expired)
+            detectedIssues.push(`Domain has no DNS or is not registered (NXDOMAIN: ${verification.reason || "Unresolvable"})`);
+            // Strip the dead website so bad data is not propagated
+            finalWebsiteUrl = "";
+            if (finalContactEmail.includes("@") && finalContactEmail.toLowerCase().includes(item.businessName.toLowerCase().replace(/[^a-z0-9]/g, ""))) {
+              finalContactEmail = "";
+            }
+          } else if (verification.status === "OFFLINE") {
+            detectedIssues.push(`Website server is currently offline or unreachable (${verification.reason || "Connection failed"})`);
+          } else if (verification.status === "ONLINE") {
+            // Active verified website - audit DNS deliverability
+            try {
+              const deliverability = await auditDomainDeliverability(finalWebsiteUrl);
+              if (deliverability.isVulnerable) {
+                detectedIssues.push(`Domain missing SPF/DMARC records (Client emails landing in spam)`);
+              }
+            } catch {
+              // Ignore DNS deliverability error
+            }
           }
         } catch {
-          // Ignore DNS errors
+          websiteStatus = "OFFLINE";
+        }
+      } else {
+        websiteStatus = "NO_WEBSITE";
+        if (!detectedIssues.some(iss => iss.toLowerCase().includes("no active website") || iss.toLowerCase().includes("no website"))) {
+          detectedIssues.push("No active website registered for this physical business");
         }
       }
 
       const { lead, isDuplicate } = createOrUpdateLead({
         userId: session.userId,
         businessName: item.businessName,
-        websiteUrl: item.websiteUrl,
+        websiteUrl: finalWebsiteUrl,
+        websiteStatus,
+        websiteHttpStatus,
         googleMapsUrl: item.googleMapsUrl,
         sourceUrl: item.sourceUrl,
         campaign: campaign || undefined,
         phoneNumber: item.phoneNumber,
-        contactEmail: item.contactEmail,
+        contactEmail: finalContactEmail,
         ownerName: item.ownerName,
         category: item.category,
         city: item.city,
