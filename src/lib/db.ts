@@ -3,7 +3,20 @@ import path from "path";
 import bcrypt from "bcryptjs";
 
 export type Role = "ADMIN" | "USER";
-export type LeadStatus = "DISCOVERED" | "AUDITED" | "CONTACTED" | "REPLIED" | "CLOSED";
+export type LeadStatus = "DISCOVERED" | "AUDITED" | "CONTACTED" | "OPENED" | "REPLIED" | "CLOSED";
+
+export interface EmailHistoryItem {
+  id?: string;
+  sentAt: string;
+  subject: string;
+  status: string;
+  body?: string;
+  recipientEmail?: string;
+  openedAt?: string;
+  openCount?: number;
+  lastOpenedAt?: string;
+  userAgent?: string;
+}
 
 export interface UserSmtpConfig {
   host: string;
@@ -68,13 +81,7 @@ export interface Lead {
     body: string;
     whatsapp: string;
   };
-  emailHistory?: Array<{
-    sentAt: string;
-    subject: string;
-    status: string;
-    body?: string;
-    recipientEmail?: string;
-  }>;
+  emailHistory?: EmailHistoryItem[];
   createdAt: string;
   updatedAt: string;
 }
@@ -759,9 +766,18 @@ export function removeCampaign(campaignName: string, requesterId: string, isAdmi
   return 1;
 }
 
-export function recordEmailSent(leadId: string, subject: string, status: string = "SENT", body?: string, recipientEmail?: string): void {
+export function recordEmailSent(
+  leadId: string, 
+  subject: string, 
+  status: string = "SENT", 
+  body?: string, 
+  recipientEmail?: string,
+  trackingId?: string
+): string {
   const db = readDb();
   const index = db.leads.findIndex(l => l.id === leadId);
+  const finalTrackingId = trackingId || `emh_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+
   if (index !== -1) {
     if (!db.leads[index].emailHistory) {
       db.leads[index].emailHistory = [];
@@ -769,16 +785,68 @@ export function recordEmailSent(leadId: string, subject: string, status: string 
     const finalBody = body || db.leads[index].aiPitch?.body || "";
     const finalRecipient = recipientEmail || db.leads[index].contactEmail || "";
     db.leads[index].emailHistory!.push({
+      id: finalTrackingId,
       sentAt: new Date().toISOString(),
       subject,
       status,
       body: finalBody,
-      recipientEmail: finalRecipient
+      recipientEmail: finalRecipient,
+      openCount: 0
     });
     db.leads[index].status = "CONTACTED";
     db.leads[index].updatedAt = new Date().toISOString();
     writeDb(db);
   }
+  return finalTrackingId;
+}
+
+export function recordEmailOpened(leadId?: string, trackingId?: string, userAgent?: string): { success: boolean; leadId?: string; openCount: number } {
+  const db = readDb();
+  let targetLeadIndex = -1;
+  let targetHistIndex = -1;
+
+  for (let i = 0; i < db.leads.length; i++) {
+    const lead = db.leads[i];
+    if (leadId && lead.id !== leadId) continue;
+    if (!lead.emailHistory || !Array.isArray(lead.emailHistory) || lead.emailHistory.length === 0) continue;
+
+    if (trackingId) {
+      const hIdx = lead.emailHistory.findIndex(h => h.id === trackingId);
+      if (hIdx !== -1) {
+        targetLeadIndex = i;
+        targetHistIndex = hIdx;
+        break;
+      }
+    } else if (leadId && lead.id === leadId) {
+      targetLeadIndex = i;
+      targetHistIndex = lead.emailHistory.length - 1;
+      break;
+    }
+  }
+
+  if (targetLeadIndex !== -1 && targetHistIndex !== -1) {
+    const lead = db.leads[targetLeadIndex];
+    const hist = lead.emailHistory![targetHistIndex];
+    const now = new Date().toISOString();
+
+    hist.openCount = (hist.openCount || 0) + 1;
+    if (!hist.openedAt) {
+      hist.openedAt = now;
+    }
+    hist.lastOpenedAt = now;
+    if (userAgent) {
+      hist.userAgent = userAgent.substring(0, 150);
+    }
+
+    if (lead.status === "CONTACTED" || lead.status === "AUDITED" || lead.status === "DISCOVERED") {
+      lead.status = "OPENED";
+    }
+    lead.updatedAt = now;
+    writeDb(db);
+    return { success: true, leadId: lead.id, openCount: hist.openCount };
+  }
+
+  return { success: false, openCount: 0 };
 }
 
 export function deleteLead(leadId: string, requesterId: string, isAdmin: boolean): boolean {

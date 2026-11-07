@@ -910,6 +910,8 @@ export default function CampaignsPage() {
                                   <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
                                     lead.status === "CONTACTED"
                                       ? "bg-blue-500/15 text-blue-500"
+                                      : lead.status === "OPENED"
+                                      ? "bg-amber-500/15 text-amber-500"
                                       : lead.status === "CLOSED"
                                       ? "bg-emerald-500/15 text-emerald-500"
                                       : "bg-[var(--text-dim)]/15 text-[var(--text-muted)]"

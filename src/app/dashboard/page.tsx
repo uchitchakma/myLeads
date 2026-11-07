@@ -69,7 +69,7 @@ export default function DashboardPage() {
   const totalLeads = leads.length;
   const slowLeads = leads.filter(l => l.speedScore < 50).length;
   const avgScore = totalLeads ? Math.round(leads.reduce((acc, l) => acc + (l.speedScore || 0), 0) / totalLeads) : 0;
-  const contactedCount = leads.filter(l => l.status === "CONTACTED" || l.status === "REPLIED" || l.status === "CLOSED").length;
+  const contactedCount = leads.filter(l => l.status === "CONTACTED" || l.status === "OPENED" || l.status === "REPLIED" || l.status === "CLOSED").length;
 
   return (
     <div className="flex min-h-screen bg-[var(--bg-main)] transition-colors">

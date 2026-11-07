@@ -528,6 +528,7 @@ export default function LeadsPage() {
                 <option value="DISCOVERED">Discovered</option>
                 <option value="AUDITED">Audited</option>
                 <option value="CONTACTED">Contacted</option>
+                <option value="OPENED">Opened</option>
                 <option value="REPLIED">Replied</option>
                 <option value="CLOSED">Closed</option>
               </select>
@@ -1118,14 +1119,17 @@ export default function LeadsPage() {
                                 ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30"
                                 : lead.status === "CONTACTED"
                                 ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30"
-                                : lead.status === "REPLIED"
+                                : lead.status === "OPENED"
                                 ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                                : lead.status === "REPLIED"
+                                ? "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30"
                                 : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                             }`}
                           >
                             <option value="DISCOVERED">Discovered</option>
                             <option value="AUDITED">Audited</option>
                             <option value="CONTACTED">Contacted</option>
+                            <option value="OPENED">Opened</option>
                             <option value="REPLIED">Replied</option>
                             <option value="CLOSED">Closed</option>
                           </select>

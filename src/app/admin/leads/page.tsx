@@ -535,6 +535,7 @@ export default function MasterLeadsPage() {
                 <option value="DISCOVERED">Discovered</option>
                 <option value="AUDITED">Audited</option>
                 <option value="CONTACTED">Contacted</option>
+                <option value="OPENED">Opened</option>
                 <option value="REPLIED">Replied</option>
                 <option value="CLOSED">Closed</option>
               </select>
@@ -1138,6 +1139,7 @@ export default function MasterLeadsPage() {
                             <option value="DISCOVERED">Discovered</option>
                             <option value="AUDITED">Audited</option>
                             <option value="CONTACTED">Contacted</option>
+                            <option value="OPENED">Opened</option>
                             <option value="REPLIED">Replied</option>
                             <option value="CLOSED">Closed</option>
                           </select>

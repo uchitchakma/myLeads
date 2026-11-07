@@ -87,16 +87,42 @@ export async function POST(req: NextRequest) {
         body = body.replaceAll(tag, val);
       }
 
+      // Generate unique tracking pixel ID and HTML payload
+      const trackingId = `emh_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      const baseUrl = process.env.NEXTAUTH_URL || "https://myleads.ucdreams.com";
+      const trackingPixelUrl = `${baseUrl}/api/tracking/open?tid=${trackingId}&lid=${lead.id}`;
+
+      const htmlBodyParagraphs = body
+        .split("\n")
+        .map((line: string) => line.trim() === "" ? "<br/>" : `<p style="margin: 0 0 14px 0; line-height: 1.6;">${line}</p>`)
+        .join("");
+
+      const emailHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1e293b; margin: 0; padding: 20px; background-color: #ffffff;">
+  <div style="max-width: 600px; margin: 0 auto;">
+    ${htmlBodyParagraphs}
+  </div>
+  <!-- 1x1 Invisible Open Tracking Pixel -->
+  <img src="${trackingPixelUrl}" width="1" height="1" style="display:none !important; width:1px !important; height:1px !important; max-height:0 !important; max-width:0 !important; opacity:0 !important; overflow:hidden !important; border:none !important;" alt="" />
+</body>
+</html>`;
+
       if (hasRealSmtp && transporter) {
         try {
           await transporter.sendMail({
             from: `"${smtpConfig!.senderName || user?.name || "Web Consultant"}" <${smtpConfig!.senderEmail || smtpConfig!.user}>`,
             to: recipient,
             subject,
-            text: body
+            text: body,
+            html: emailHtml
           });
 
-          recordEmailSent(lead.id, subject, "SENT", body, recipient);
+          recordEmailSent(lead.id, subject, "SENT", body, recipient, trackingId);
           dispatchLogs.push({
             leadId: lead.id,
             businessName: lead.businessName,
@@ -116,7 +142,7 @@ export async function POST(req: NextRequest) {
         }
       } else {
         // Simulated Dispatch (Updates local CRM pipeline & records activity)
-        recordEmailSent(lead.id, subject, "SIMULATED_SENT", body, recipient);
+        recordEmailSent(lead.id, subject, "SIMULATED_SENT", body, recipient, trackingId);
         dispatchLogs.push({
           leadId: lead.id,
           businessName: lead.businessName,

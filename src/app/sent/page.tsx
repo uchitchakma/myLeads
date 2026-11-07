@@ -25,11 +25,15 @@ import {
   MessageCircle,
   Sparkles,
   SlidersHorizontal,
-  ChevronRight
+  ChevronRight,
+  Flame,
+  Activity,
+  Zap
 } from "lucide-react";
 import { getWhatsAppClickUrl } from "@/lib/url_validator";
 
 interface SentEmailRecord {
+  id?: string;
   leadId: string;
   businessName: string;
   recipientEmail: string;
@@ -42,15 +46,21 @@ interface SentEmailRecord {
   whatsappPitch?: string;
   status: string;
   sentAt: string;
+  openedAt?: string;
+  openCount?: number;
+  lastOpenedAt?: string;
+  userAgent?: string;
 }
 
 export default function SentEmailsPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "SENT" | "FAILED">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "OPENED" | "SENT" | "UNOPENED" | "FAILED">("ALL");
   const [selectedRecord, setSelectedRecord] = useState<SentEmailRecord | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [simulatingLeadId, setSimulatingLeadId] = useState<string | null>(null);
+  const [simulateToast, setSimulateToast] = useState<string | null>(null);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -79,6 +89,7 @@ export default function SentEmailsPage() {
       if (lead.emailHistory && Array.isArray(lead.emailHistory) && lead.emailHistory.length > 0) {
         for (const hist of lead.emailHistory) {
           list.push({
+            id: hist.id,
             leadId: lead.id,
             businessName: lead.businessName,
             recipientEmail: hist.recipientEmail || lead.contactEmail || "N/A",
@@ -90,11 +101,15 @@ export default function SentEmailsPage() {
             body: hist.body || lead.aiPitch?.body || "Email body content recorded.",
             whatsappPitch: lead.aiPitch?.whatsapp || "",
             status: hist.status || "SENT",
-            sentAt: hist.sentAt || lead.updatedAt || lead.createdAt
+            sentAt: hist.sentAt || lead.updatedAt || lead.createdAt,
+            openedAt: hist.openedAt,
+            openCount: hist.openCount || 0,
+            lastOpenedAt: hist.lastOpenedAt,
+            userAgent: hist.userAgent
           });
         }
-      } else if (lead.status === "CONTACTED") {
-        // Fallback for leads marked contacted without history array
+      } else if (lead.status === "CONTACTED" || lead.status === "OPENED") {
+        // Fallback for leads marked contacted/opened without history array
         list.push({
           leadId: lead.id,
           businessName: lead.businessName,
@@ -107,7 +122,9 @@ export default function SentEmailsPage() {
           body: lead.aiPitch?.body || "Email body content recorded.",
           whatsappPitch: lead.aiPitch?.whatsapp || "",
           status: "SENT",
-          sentAt: lead.updatedAt || lead.createdAt
+          sentAt: lead.updatedAt || lead.createdAt,
+          openCount: lead.status === "OPENED" ? 1 : 0,
+          openedAt: lead.status === "OPENED" ? lead.updatedAt : undefined
         });
       }
     }
@@ -128,6 +145,8 @@ export default function SentEmailsPage() {
 
       const matchesStatus = 
         statusFilter === "ALL" ? true :
+        statusFilter === "OPENED" ? (r.openCount || 0) > 0 :
+        statusFilter === "UNOPENED" ? (r.openCount || 0) === 0 :
         statusFilter === "SENT" ? (r.status === "SENT" || r.status === "SIMULATED_SENT") :
         (r.status === "FAILED");
 
@@ -141,18 +160,37 @@ export default function SentEmailsPage() {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const getCleanPhone = (phone?: string) => {
-    if (!phone) return "";
-    let clean = phone.replace(/[^\d+]/g, "");
-    if (!clean.startsWith("+")) {
-      if (clean.length === 10) clean = "1" + clean;
-      else if (!clean.startsWith("1") && clean.length === 11) clean = "1" + clean;
-      else if (clean.length === 10) clean = "1" + clean;
+  const handleSimulateOpen = async (record: SentEmailRecord) => {
+    setSimulatingLeadId(record.leadId);
+    try {
+      const res = await fetch(`/api/tracking/open?tid=${record.id || ""}&lid=${record.leadId}&action=simulate`);
+      const data = await res.json();
+      if (data.success) {
+        setSimulateToast(`Recorded open trigger for ${record.businessName} (Total: ${data.openCount}x)`);
+        if (selectedRecord && selectedRecord.leadId === record.leadId) {
+          setSelectedRecord(prev => prev ? {
+            ...prev,
+            openCount: data.openCount,
+            lastOpenedAt: new Date().toISOString(),
+            openedAt: prev.openedAt || new Date().toISOString()
+          } : null);
+        }
+        await fetchLeads();
+      } else {
+        setSimulateToast(`Could not record open: ${data.message || "Unknown error"}`);
+      }
+    } catch (err: any) {
+      console.error("Simulation failed:", err);
+      setSimulateToast("Failed to simulate open event.");
+    } finally {
+      setSimulatingLeadId(null);
+      setTimeout(() => setSimulateToast(null), 4000);
     }
-    return clean.replace("+", "");
   };
 
   const totalDelivered = sentRecords.filter(r => r.status === "SENT" || r.status === "SIMULATED_SENT").length;
+  const totalOpened = sentRecords.filter(r => (r.openCount || 0) > 0).length;
+  const openRate = sentRecords.length > 0 ? Math.round((totalOpened / sentRecords.length) * 100) : 0;
   const uniqueBusinesses = new Set(sentRecords.map(r => r.leadId)).size;
 
   return (
@@ -172,9 +210,13 @@ export default function SentEmailsPage() {
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 font-semibold border border-emerald-500/20">
                   Live History
                 </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 font-semibold border border-amber-500/20 flex items-center gap-1">
+                  <Activity className="w-2.5 h-2.5 animate-pulse" />
+                  Pixel Tracking Active
+                </span>
               </h1>
               <p className="text-xs text-[var(--text-muted)]">
-                Track every dispatched cold email, review personalized pitches, and launch instant follow-ups.
+                Track dispatched cold emails, monitor real-time recipient opens, and launch instant follow-ups.
               </p>
             </div>
           </div>
@@ -191,21 +233,34 @@ export default function SentEmailsPage() {
           </div>
         </header>
 
+        {/* Global Toast */}
+        {simulateToast && (
+          <div className="bg-amber-500/90 text-white text-xs font-semibold px-4 py-2.5 flex items-center justify-between shadow-md animate-in slide-in-from-top duration-200">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 fill-white" />
+              <span>{simulateToast}</span>
+            </div>
+            <button onClick={() => setSimulateToast(null)} className="opacity-80 hover:opacity-100">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Quick Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center gap-4">
+          {/* Quick Stats Grid - 4 Columns */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center gap-4 shadow-xs">
               <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
                 <Send className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-xs font-medium text-[var(--text-muted)]">Total Emails Dispatched</div>
+                <div className="text-xs font-medium text-[var(--text-muted)]">Total Dispatched</div>
                 <div className="text-2xl font-bold text-[var(--text-main)] mt-0.5">{sentRecords.length}</div>
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center gap-4">
+            <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center gap-4 shadow-xs">
               <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
@@ -220,19 +275,34 @@ export default function SentEmailsPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center gap-4">
+            <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center gap-4 shadow-xs">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                <Eye className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-xs font-medium text-[var(--text-muted)]">Emails Opened</div>
+                <div className="text-2xl font-bold text-amber-500 mt-0.5">
+                  {totalOpened}
+                  <span className="text-xs font-normal text-[var(--text-muted)] ml-1.5">
+                    ({openRate}% rate)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center gap-4 shadow-xs">
               <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
                 <Building2 className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-xs font-medium text-[var(--text-muted)]">Unique Companies Contacted</div>
+                <div className="text-xs font-medium text-[var(--text-muted)]">Unique Companies</div>
                 <div className="text-2xl font-bold text-[var(--text-main)] mt-0.5">{uniqueBusinesses}</div>
               </div>
             </div>
           </div>
 
           {/* Filter & Search Bar */}
-          <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
             <div className="relative w-full sm:w-96">
               <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -244,11 +314,11 @@ export default function SentEmailsPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
               <span className="text-xs text-[var(--text-muted)] flex items-center gap-1 shrink-0">
                 <SlidersHorizontal className="w-3.5 h-3.5" /> Filter:
               </span>
-              <div className="flex items-center rounded-xl bg-[var(--bg-main)] p-1 border border-[var(--border-subtle)] text-xs font-medium">
+              <div className="flex items-center rounded-xl bg-[var(--bg-main)] p-1 border border-[var(--border-subtle)] text-xs font-medium shrink-0">
                 <button
                   onClick={() => setStatusFilter("ALL")}
                   className={`px-3 py-1 rounded-lg transition ${
@@ -258,6 +328,16 @@ export default function SentEmailsPage() {
                   }`}
                 >
                   All ({sentRecords.length})
+                </button>
+                <button
+                  onClick={() => setStatusFilter("OPENED")}
+                  className={`px-3 py-1 rounded-lg transition ${
+                    statusFilter === "OPENED"
+                      ? "bg-amber-500 text-white shadow-xs font-semibold"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                  }`}
+                >
+                  Opened ({totalOpened})
                 </button>
                 <button
                   onClick={() => setStatusFilter("SENT")}
@@ -270,10 +350,20 @@ export default function SentEmailsPage() {
                   Delivered ({totalDelivered})
                 </button>
                 <button
+                  onClick={() => setStatusFilter("UNOPENED")}
+                  className={`px-3 py-1 rounded-lg transition ${
+                    statusFilter === "UNOPENED"
+                      ? "bg-slate-700 text-white shadow-xs font-semibold"
+                      : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                  }`}
+                >
+                  Unopened ({sentRecords.length - totalOpened})
+                </button>
+                <button
                   onClick={() => setStatusFilter("FAILED")}
                   className={`px-3 py-1 rounded-lg transition ${
                     statusFilter === "FAILED"
-                      ? "bg-amber-600 text-white shadow-xs font-semibold"
+                      ? "bg-rose-600 text-white shadow-xs font-semibold"
                       : "text-[var(--text-muted)] hover:text-[var(--text-main)]"
                   }`}
                 >
@@ -312,6 +402,7 @@ export default function SentEmailsPage() {
                       <th className="py-3 px-4">Category & City</th>
                       <th className="py-3 px-4">Dispatched At</th>
                       <th className="py-3 px-4">Delivery</th>
+                      <th className="py-3 px-4">Open Tracking</th>
                       <th className="py-3 px-4">WhatsApp</th>
                       <th className="py-3 px-4 text-right">Inspect Email</th>
                     </tr>
@@ -319,7 +410,7 @@ export default function SentEmailsPage() {
                   <tbody className="divide-y divide-[var(--border-subtle)]">
                     {filteredRecords.map((item, idx) => (
                       <tr 
-                        key={`${item.leadId}_${idx}`}
+                        key={`${item.leadId}_${item.id || idx}`}
                         className="hover:bg-[var(--bg-card-hover)] transition group"
                       >
                         <td className="py-3 px-4">
@@ -370,12 +461,35 @@ export default function SentEmailsPage() {
 
                         <td className="py-3 px-4 whitespace-nowrap">
                           {item.status === "SENT" || item.status === "SIMULATED_SENT" ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">
                               <CheckCircle2 className="w-3 h-3" /> Sent Live
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/20">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/20">
                               <AlertCircle className="w-3 h-3" /> Lookup Issue
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Open Tracking Column */}
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          {(item.openCount || 0) > 0 ? (
+                            <div className="flex flex-col gap-0.5">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                                <Eye className="w-3.5 h-3.5" />
+                                Opened ({item.openCount}x)
+                              </span>
+                              {item.lastOpenedAt && (
+                                <span className="text-[10px] text-[var(--text-muted)] font-mono pl-1">
+                                  {new Date(item.lastOpenedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-[var(--bg-main)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                              <Eye className="w-3 h-3 text-[var(--text-dim)]" />
+                              Unopened
                             </span>
                           )}
                         </td>
@@ -455,6 +569,55 @@ export default function SentEmailsPage() {
 
               {/* Message Details */}
               <div className="p-6 overflow-y-auto space-y-5">
+                {/* Real-Time Email Open Tracking Card */}
+                <div className={`p-4 rounded-xl border transition ${
+                  (selectedRecord.openCount || 0) > 0
+                    ? "bg-amber-500/5 border-amber-500/30"
+                    : "bg-[var(--bg-main)] border-[var(--border-subtle)]"
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-2 rounded-lg ${
+                        (selectedRecord.openCount || 0) > 0 
+                          ? "bg-amber-500/20 text-amber-600 dark:text-amber-400" 
+                          : "bg-slate-500/15 text-slate-400"
+                      }`}>
+                        <Eye className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-[var(--text-main)] flex items-center gap-2">
+                          {(selectedRecord.openCount || 0) > 0 ? (
+                            <>
+                              <span className="flex h-2 w-2 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                              </span>
+                              Recipient Opened Email! ({selectedRecord.openCount}x total)
+                            </>
+                          ) : (
+                            "Open Tracking: Unopened"
+                          )}
+                        </div>
+                        <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                          {(selectedRecord.openCount || 0) > 0 
+                            ? `First opened at: ${new Date(selectedRecord.openedAt!).toLocaleString()}${selectedRecord.lastOpenedAt && selectedRecord.lastOpenedAt !== selectedRecord.openedAt ? ` (Last: ${new Date(selectedRecord.lastOpenedAt).toLocaleTimeString()})` : ""}`
+                            : "Tracking pixel embedded. When the recipient views this email, the timestamp will appear here automatically."}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleSimulateOpen(selectedRecord)}
+                      disabled={simulatingLeadId === selectedRecord.leadId}
+                      className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-semibold text-xs flex items-center gap-1.5 transition disabled:opacity-50"
+                      title="Simulate open trigger to test database logging"
+                    >
+                      <Zap className={`w-3.5 h-3.5 ${simulatingLeadId === selectedRecord.leadId ? "animate-spin" : ""}`} />
+                      {simulatingLeadId === selectedRecord.leadId ? "Recording..." : "Test Open Trigger"}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Email Meta Card */}
                 <div className="p-3.5 rounded-xl bg-[var(--bg-main)] border border-[var(--border-subtle)] text-xs space-y-2">
                   <div className="flex items-center justify-between">
@@ -529,17 +692,20 @@ export default function SentEmailsPage() {
 
                   {selectedRecord.phoneNumber && (
                     <div className="pt-2 border-t border-[#C5453E]/10">
-                      <a
-                        href={`https://api.whatsapp.com/send?phone=${getCleanPhone(selectedRecord.phoneNumber)}&text=${encodeURIComponent(
-                          selectedRecord.whatsappPitch || `Hi ${selectedRecord.businessName} team! I sent a quick email regarding your website speed earlier. Open to a 2-min breakdown?`
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-md shadow-emerald-600/20"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                        Send WhatsApp Follow-up Message
-                      </a>
+                      {(() => {
+                        const waUrl = getWhatsAppClickUrl(selectedRecord.phoneNumber, selectedRecord.whatsappPitch, selectedRecord.businessName);
+                        return waUrl ? (
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-md shadow-emerald-600/20"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                            Send WhatsApp Follow-up Message
+                          </a>
+                        ) : null;
+                      })()}
                     </div>
                   )}
                 </div>
